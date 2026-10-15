@@ -141,8 +141,8 @@
 
     <p id="wakeStatus" role="status" style="font-size:12px;color:var(--muted);margin:0 4px 16px">Bildschirm bleibt beim Bimmeln nach Möglichkeit eingeschaltet.</p>
     <section class="settings" aria-label="Glocken-Einstellungen">
-      <div class="setting-header"><h2>Feintuning</h2><span class="small-tag">GLOCKENPHYSIK 2.0</span></div>
-      <p style="font-size:12px;line-height:1.55;color:var(--muted);margin:-8px 0 15px">Die Glocke schwingt mit deinem Handy. Ein Schlag entsteht nur, wenn der Klöppel die Glockenwand trifft. Je kräftiger der Aufprall, desto lauter der Klang.</p>
+      <div class="setting-header"><h2>Feintuning</h2><span class="small-tag">DIREKTES BIMMELN</span></div>
+      <p style="font-size:12px;line-height:1.55;color:var(--muted);margin:-8px 0 15px">Einfach bewegen und bimmeln. Die Empfindlichkeit bestimmt, wie leicht die Glocke auf deine Bewegung reagiert.</p>
       <p id="soundDescription" style="margin:0 0 17px;color:var(--muted);font-size:12px;line-height:1.5">🔔 Originalton eingebettet · Bereit zum Starten</p>
       <div class="picker-header"><strong>Welche Glocke darf's sein?</strong><span>Antippen = Probehören</span></div>
       <div class="bell-picker" id="bellPicker" role="group" aria-label="Kuhglocken-Auswahl">
@@ -182,6 +182,7 @@
   let sampleBuffer = null, sampleOffset = 0, sampleLoading = null, sampleUnavailable = false;
   let enabled = false, gotSensorData = false, count = 0;
   let lastLevel = 0;
+  let lastMotionRing = -Infinity;
   let lastAnimationTimer = null, sensorTimeout = null;
   const gravity = [0,0,0];
   let gravityReady = false;
@@ -285,7 +286,7 @@
     $('startIcon').textContent = enabled ? 'Ⅱ' : '▶';
     $('startText').textContent = enabled ? 'Bewegung stoppen' : 'Bewegung aktivieren';
     $('stageHint').innerHTML = enabled
-      ? 'Der <strong>Klöppel schlägt an</strong>, wenn du schwingst.'
+      ? '<strong>Bewegen = Bimmeln.</strong> Schwing dein Handy!'
       : 'Tipp auf die Glocke für ein <strong>Probebimmeln</strong>';
   }
 
@@ -431,7 +432,7 @@
 
   // Das Gehäuse folgt dem Schwung. Der lose Klöppel verhält sich wie
   // ein gedämpftes Pendel und wird durch Richtungswechsel ausgelenkt.
-  // Nur die Kollision mit der Glockenwand löst den eigentlichen Ton aus.
+  // Dieses Modell dient nur der Animation. Töne entstehen direkt im Sensorhandler.
   function simulatePhysics(dt, now) {
     const m=physics;
     const fresh=now-m.lastSensor<170 && enabled;
@@ -455,11 +456,7 @@
       m.clapper=side*lip;
       if(outwardSpeed>0) {
         m.clapperVelocity=-side*outwardSpeed*.15;
-        const minImpact=.95-(+sensitivity.value-1)*.055;
-        if(enabled && outwardSpeed>=minImpact && now-m.lastHit>175) {
-          m.lastHit=now;
-          ring(clamp(outwardSpeed*.19,.19,1.24));
-        }
+        // Die Kollision bewegt nur die Grafik; der Sensor löst den Ton direkt aus.
       } else if(side*m.clapperVelocity<0) {
         // Nach innen bewegender Klöppel darf die Wand verlassen.
       } else m.clapperVelocity=0;
@@ -531,6 +528,7 @@
     gravityReady=false;
     gravity.fill(0);
     lastLevel=0;
+    lastMotionRing=-Infinity;
     physics.target=0;
     physics.acceleration=0;
     physics.lastAcceleration=0;
@@ -576,7 +574,7 @@
       $('stageStatus').textContent='LIVE';
       $('dot').classList.add('live');
       clearTimeout(sensorTimeout);
-      feedback('Glockenphysik aktiv. Langsam schwingen oder kräftig schütteln!','✓');
+      feedback('Direktes Bimmeln aktiv. Bewege oder schüttle dein Handy!','✓');
     }
 
     const m=physics;
@@ -591,6 +589,16 @@
       : [0,0,0];
     m.gyroAxis=chooseAxis(angularRates,m.gyroAxis,28);
     const signedAngularSpeed=angularRates[m.gyroAxis]*Math.PI/180;
+    // Direkte Bewegungserkennung, unabhängig von Animationsframes und Klöppel.
+    // Beschleunigung oder Drehen reicht aus; Schwerkraft ist oben herausgefiltert.
+    const motionStrength=Math.max(Math.hypot(x,y,z),Math.hypot(...angularRates)*Math.PI/180*2.5);
+    const threshold=5.8-(+sensitivity.value-1)*.5;
+    // Sofortiger erster Schlag, danach maximal gut drei Schläge pro Sekunde.
+    if(motionStrength>=threshold && now-lastMotionRing>=280) {
+      lastMotionRing=now;
+      ring(clamp(.4+(motionStrength-threshold)*.075,.4,1.15));
+    }
+
     const gain=.68+(+sensitivity.value-1)*.13;
     // Beschleunigung, Drehrate und Richtungswechsel erzeugen Impulse.
     // Der Klöppel reagiert träge auf diese Änderungen.
