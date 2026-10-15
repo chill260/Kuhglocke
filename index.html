@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#142924">
-  <meta name="description" content="Die Kuhglocke für die Hosentasche: Handy bewegen und bimmeln lassen.">
-  <title>Kuhglocke · Bimmel!</title>
+  <meta name="description" content="Digitale Kuhglocke mit Bewegungserkennung und gemeinsamer Rangliste.">
+  <title>Kuhglocke</title>
   <style>
     :root { color-scheme: light; --ink:#192d28; --muted:#6b7469; --paper:#f7f4ea; --card:#fffdf7; --green:#18382e; --green2:#264b3b; --ochre:#dfa64b; --line:#dfded2; }
     * { box-sizing:border-box; }
@@ -94,14 +94,14 @@
 <body>
   <main class="app">
     <header class="topbar"><div class="brand"><span class="brand-mark" aria-hidden="true">♧</span> ALM<span style="color:#b58953">.</span>LAB</div><span class="version">EDITION 02 / 2026</span></header>
-    <div class="eyebrow">Glockenklang to go</div>
-    <h1>Mehr <em>Bimmel.</em><br>Weniger Blabla.</h1>
-    <p class="sub">Deine eigene Kuhglocke für die Hosentasche. Handy bewegen, und schon klingt die Alm. 🐄</p>
+    <div class="eyebrow">Digitale Kuhglocke</div>
+    <h1>Kuhglocke<br><em>für unterwegs.</em></h1>
+    <p class="sub">Bewege dein Smartphone, um die Glocke zu läuten. Klang, Empfindlichkeit und Lautstärke lassen sich individuell einstellen.</p>
 
     <section class="stage" id="stage" aria-label="Kuhglocke">
       <div class="top-stage"><div class="stage-tag"><span class="status-dot" id="dot"></span><span id="stageStatus">BEREIT</span></div><div class="stage-tag" id="stageCounter">00 KLÄNGE</div></div>
       <div class="sound-rings" aria-hidden="true"><span></span><span></span></div>
-      <button id="bellHit" type="button" aria-label="Kuhglocke antippen und läuten">
+      <button id="bellHit" type="button" aria-label="Glockenklang testen">
         <svg id="bellSVG" viewBox="0 0 252 255" role="img" aria-label="Goldene Kuhglocke">
           <defs>
             <linearGradient id="bellGold" x1="0" y1="0" x2="1" y2=".25"><stop offset="0" stop-color="#936329"/><stop offset=".16" stop-color="#dbad5e"/><stop offset=".38" stop-color="#f0cc83"/><stop offset=".7" stop-color="#bc8336"/><stop offset="1" stop-color="#8e5a25"/></linearGradient>
@@ -130,7 +130,7 @@
           <g fill="#eac77b" opacity=".7"><circle cx="34" cy="91" r="2.1"/><circle cx="216" cy="111" r="2.1"/><path d="M27 151v11m-5-5h10M225 59v12m-6-6h12" stroke="#eac77b" stroke-width="1.7" stroke-linecap="round"/></g>
         </svg>
       </button>
-      <div class="stage-hint" id="stageHint">Tipp auf die Glocke für ein <strong>Probebimmeln</strong></div>
+      <div class="stage-hint" id="stageHint">Glocke antippen, um den <strong>Klang zu testen</strong></div>
     </section>
 
     <div class="controls">
@@ -139,17 +139,17 @@
     </div>
     <div class="feedback" role="status" aria-live="polite"><span class="feedback-icon" id="feedbackIcon">✦</span><span id="feedback">Tippe auf „Bewegung aktivieren“ und schwing dein Handy.</span></div>
 
-    <p id="wakeStatus" role="status" style="font-size:12px;color:var(--muted);margin:0 4px 16px">Bildschirm bleibt beim Bimmeln nach Möglichkeit eingeschaltet.</p>
+    <p id="wakeStatus" role="status" style="font-size:12px;color:var(--muted);margin:0 4px 16px">Der Bildschirm bleibt während der Nutzung nach Möglichkeit eingeschaltet.</p>
     <section class="settings" aria-label="Glocken-Einstellungen">
-      <div class="setting-header"><h2>Feintuning</h2><span class="small-tag">GLOCKENPHYSIK 3.0</span></div>
-      <p style="font-size:12px;line-height:1.55;color:var(--muted);margin:-8px 0 15px">Sanft schwingen oder kräftig schütteln: Der Klöppel schwingt mit und bimmelt beim Anschlagen. Die Empfindlichkeit bestimmt, wie leicht die Glocke reagiert.</p>
+      <div class="setting-header"><h2>Einstellungen</h2><span class="small-tag">GLOCKENPHYSIK 3.0</span></div>
+      <p style="font-size:12px;line-height:1.55;color:var(--muted);margin:-8px 0 15px">Die Bewegung des Smartphones steuert Glocke und Klöppel. Beim Anschlagen entsteht ein Ton. Über die Empfindlichkeit lässt sich die Reaktion anpassen.</p>
       <p id="soundDescription" style="margin:0 0 17px;color:var(--muted);font-size:12px;line-height:1.5">🔔 Originalton eingebettet · Bereit zum Starten</p>
-      <div class="picker-header"><strong>Welche Glocke darf's sein?</strong><span>Antippen = Probehören</span></div>
+      <div class="picker-header"><strong>Glockenklang</strong><span>Antippen zum Anhören</span></div>
       <div class="bell-picker" id="bellPicker" role="group" aria-label="Kuhglocken-Auswahl">
-        <button class="bell-option selected" type="button" data-bell="classic" aria-pressed="true"><span class="bell-check" aria-hidden="true">✓</span><span class="bell-icon" aria-hidden="true">🔔</span><strong>Die Klassische</strong><small>Originalklang</small></button>
-        <button class="bell-option" type="button" data-bell="small" aria-pressed="false"><span class="bell-check" aria-hidden="true">✓</span><span class="bell-icon" aria-hidden="true">✨</span><strong>Kleine Schelle</strong><small>Hell &amp; knackig</small></button>
-        <button class="bell-option" type="button" data-bell="big" aria-pressed="false"><span class="bell-check" aria-hidden="true">✓</span><span class="bell-icon" aria-hidden="true">🏔️</span><strong>Große Almglocke</strong><small>Tief &amp; sonor</small></button>
-        <button class="bell-option" type="button" data-bell="double" aria-pressed="false"><span class="bell-check" aria-hidden="true">✓</span><span class="bell-icon" aria-hidden="true">🎶</span><strong>Doppelbimmel</strong><small>Zwei Schläge</small></button>
+        <button class="bell-option selected" type="button" data-bell="classic" aria-pressed="true"><span class="bell-check" aria-hidden="true">✓</span><span class="bell-icon" aria-hidden="true">🔔</span><strong>Klassische Glocke</strong><small>Originalklang</small></button>
+        <button class="bell-option" type="button" data-bell="small" aria-pressed="false"><span class="bell-check" aria-hidden="true">✓</span><span class="bell-icon" aria-hidden="true">✨</span><strong>Helle Glocke</strong><small>Hoher, kurzer Klang</small></button>
+        <button class="bell-option" type="button" data-bell="big" aria-pressed="false"><span class="bell-check" aria-hidden="true">✓</span><span class="bell-icon" aria-hidden="true">🏔️</span><strong>Tiefe Glocke</strong><small>Tiefer, voller Klang</small></button>
+        <button class="bell-option" type="button" data-bell="double" aria-pressed="false"><span class="bell-check" aria-hidden="true">✓</span><span class="bell-icon" aria-hidden="true">🎶</span><strong>Doppelanschlag</strong><small>Zwei Schläge</small></button>
       </div>
       <div class="range-group">
         <div class="range-label"><label for="sensitivity">Empfindlichkeit</label><span class="range-value" id="sensValue">Mittel</span></div>
@@ -159,20 +159,20 @@
       <div class="range-group">
         <div class="range-label"><label for="volume">Lautstärke</label><span class="range-value" id="volumeValue">80 %</span></div>
         <input type="range" id="volume" min="0" max="100" step="1" value="80" aria-label="Lautstärke der Kuhglocke">
-        <div class="range-ends"><span>Leise</span><span>Volle Alm</span></div>
+        <div class="range-ends"><span>Leise</span><span>Laut</span></div>
       </div>
     </section>
-    <div class="bottom"><div class="stat"><span aria-hidden="true">🔔</span><b id="count">0</b> Mal gebimmelt</div><div class="stat"><div class="live-level" id="levels" aria-label="Bewegungsstärke"><span></span><span></span><span></span><span></span></div><span>Bewegung</span></div></div>
+    <div class="bottom"><div class="stat"><span aria-hidden="true">🔔</span><b id="count">0</b> Anschläge</div><div class="stat"><div class="live-level" id="levels" aria-label="Bewegungsstärke"><span></span><span></span><span></span><span></span></div><span>Bewegung</span></div></div>
 
     <section class="settings leaderboard" aria-labelledby="leaderboardTitle" style="margin-top:20px">
-      <div class="setting-header"><h2 id="leaderboardTitle">🏆 Die Bimmel-Top-10</h2><button class="test-btn" id="refreshScores" type="button" style="padding:7px 10px">↻ Laden</button></div>
-      <p style="font-size:12px;color:var(--muted);line-height:1.5">Dein Spitzname und deine Anzahl sind öffentlich sichtbar. Pro Spitzname zählt der höchste Score.</p>
+      <div class="setting-header"><h2 id="leaderboardTitle">Rangliste · Top 10</h2><button class="test-btn" id="refreshScores" type="button" style="padding:7px 10px">↻ Laden</button></div>
+      <p style="font-size:12px;color:var(--muted);line-height:1.5">Spitzname und Anzahl der Anschläge sind öffentlich sichtbar. Pro Spitzname wird der höchste Wert angezeigt.</p>
       <form id="scoreForm">
-        <label for="nickname" style="font-size:13px;font-weight:760">Dein Spitzname</label>
-        <input id="nickname" name="nickname" maxlength="24" minlength="2" required autocomplete="nickname" placeholder="Zum Beispiel Bimmel-Boss" style="width:100%;margin:8px 0 10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)">
-        <button id="submitScore" class="main-btn" type="submit" style="width:100%;min-height:46px">Aktuelle Anzahl eintragen</button>
+        <label for="nickname" style="font-size:13px;font-weight:760">Spitzname</label>
+        <input id="nickname" name="nickname" maxlength="24" minlength="2" required autocomplete="nickname" placeholder="Spitznamen eingeben" style="width:100%;margin:8px 0 10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)">
+        <button id="submitScore" class="main-btn" type="submit" style="width:100%;min-height:46px">Ergebnis eintragen</button>
       </form>
-      <p id="scoreMessage" role="status" aria-live="polite" style="font-size:12px;line-height:1.5;color:var(--muted)">Noch kein Score eingetragen.</p>
+      <p id="scoreMessage" role="status" aria-live="polite" style="font-size:12px;line-height:1.5;color:var(--muted)">Noch kein Ergebnis eingetragen.</p>
       <ol id="leaderboardList" style="padding:0;list-style:none;margin:16px 0 0"></ol>
       <button id="resetCount" class="test-btn" type="button" style="width:100%;padding:10px;margin-top:12px">Zählung neu starten</button>
     </section>
@@ -209,10 +209,10 @@
   const storageKey = 'almlab-cowbell-settings-v1';
   // Vier deutlich hörbare Klangvarianten derselben gemeinfreien Originalaufnahme.
   const bellTypes = {
-    classic:{label:'Die Klassische',pitch:.93,decay:1.03,filter:4400,gain:1},
-    small:{label:'Kleine Schelle',pitch:1.47,decay:.61,filter:6500,gain:.84},
-    big:{label:'Große Almglocke',pitch:.66,decay:1.42,filter:1950,gain:1.08},
-    double:{label:'Doppelbimmel',pitch:1.04,decay:.83,filter:4600,gain:.83,secondPitch:1.34}
+    classic:{label:'Klassische Glocke',pitch:.93,decay:1.03,filter:4400,gain:1},
+    small:{label:'Helle Glocke',pitch:1.47,decay:.61,filter:6500,gain:.84},
+    big:{label:'Tiefe Glocke',pitch:.66,decay:1.42,filter:1950,gain:1.08},
+    double:{label:'Doppelanschlag',pitch:1.04,decay:.83,filter:4600,gain:.83,secondPitch:1.34}
   };
   let selectedBell='classic';
 
@@ -298,8 +298,8 @@
     $('startIcon').textContent = enabled ? 'Ⅱ' : '▶';
     $('startText').textContent = enabled ? 'Bewegung stoppen' : 'Bewegung aktivieren';
     $('stageHint').innerHTML = enabled
-      ? '<strong>Sanft schwingen</strong> und den Klöppel bimmeln lassen.'
-      : 'Tipp auf die Glocke für ein <strong>Probebimmeln</strong>';
+      ? 'Smartphone <strong>sanft schwingen</strong>, um die Glocke zu läuten.'
+      : 'Glocke antippen, um den <strong>Klang zu testen</strong>';
   }
 
   function initAudio() {
@@ -585,7 +585,7 @@
       $('stageStatus').textContent='LIVE';
       $('dot').classList.add('live');
       clearTimeout(sensorTimeout);
-      feedback('Glockenphysik aktiv. Schon sanftes Schwingen reicht!','✓');
+      feedback('Bewegungserkennung aktiv. Die Glocke reagiert auf das Schwingen des Smartphones.','✓');
     }
 
     const m=physics;
@@ -625,7 +625,7 @@
     }
   }
 
-  function stopListening(message='Bewegung gestoppt. Tippe auf Start, um weiterzubimmeln.') {
+  function stopListening(message='Bewegungserkennung gestoppt. Zum Fortsetzen erneut aktivieren.') {
     window.removeEventListener('devicemotion',motionHandler);
     clearTimeout(sensorTimeout);
     resetDetection();
@@ -642,7 +642,7 @@
     bars.forEach(b=>{b.style.background='#d4d8c6';b.style.opacity='.7';});
   }
   document.addEventListener('visibilitychange',()=>{
-    if(document.hidden && enabled)stopListening('Im Hintergrund pausiert. Zum Weiterbimmeln erneut starten.');
+    if(document.hidden && enabled)stopListening('Im Hintergrund pausiert. Zum Fortsetzen erneut aktivieren.');
   });
   toggle.addEventListener('click', async () => {
     if(enabled) {stopListening();return;}
@@ -725,7 +725,7 @@
       const scores=await scoreRequest('cowbell_leaderboard?select=nickname,score&order=score.desc,nickname.asc&limit=10');
       const list=$('leaderboardList');list.replaceChildren();
       if(!scores.length) {
-        const item=document.createElement('li');item.textContent='Die Weide ist noch leer. Hol dir Platz 1! 🐄';list.append(item);
+        const item=document.createElement('li');item.textContent='Noch keine Ergebnisse vorhanden.';list.append(item);
       }
       scores.forEach((score,index)=>{
         const item=document.createElement('li');
@@ -748,8 +748,8 @@
     if(nickname.length<2 || nickname.length>24 || /[\u0000-\u001f\u007f]/.test(nickname)) {
       scoreStatus('Bitte einen Spitznamen mit 2–24 Zeichen eingeben.');return;
     }
-    if(count<1){scoreStatus('Erst bimmeln, dann glänzen! 🔔');return;}
-    if(count>1000000){scoreStatus('Maximal 1.000.000 Bimmels pro Eintrag.');return;}
+    if(count<1){scoreStatus('Vor dem Eintragen muss mindestens ein Anschlag gezählt werden.');return;}
+    if(count>1000000){scoreStatus('Pro Eintrag sind maximal 1.000.000 Anschläge möglich.');return;}
     const submittedCount=count;
     if(!scoreSubmission || scoreSubmission.nickname!==nickname || scoreSubmission.score!==submittedCount) {
       const bytes=crypto.getRandomValues(new Uint8Array(16));
@@ -759,11 +759,11 @@
       scoreSubmission={submission_id:id,nickname,score:submittedCount};
     }
     scoreBusy=true;$('submitScore').disabled=true;
-    scoreStatus('Score wird eingetragen …');
+    scoreStatus('Ergebnis wird gespeichert …');
     try {
       await scoreRequest('cowbell_scores',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(scoreSubmission)});
       try{localStorage.setItem('cowbell-nickname-v1',nickname);}catch(_){}
-      scoreStatus('✓ '+submittedCount.toLocaleString('de-DE')+' Bimmels eingetragen!');
+      scoreStatus('✓ '+submittedCount.toLocaleString('de-DE')+' Anschläge gespeichert.');
       await loadScores();
     } catch(e) {
       scoreStatus(e.name==='AbortError'?'Keine Antwort. Bitte erneut versuchen – derselbe Eintrag wird nicht doppelt gespeichert.':e.message);
@@ -772,9 +772,9 @@
   $('refreshScores').addEventListener('click',()=>void loadScores());
   $('resetCount').addEventListener('click',()=>{
     if(scoreBusy) return;
-    stopListening('Neue Runde! Bewegung aktivieren und losbimmeln.');
+    stopListening('Zählung zurückgesetzt. Bewegungserkennung erneut aktivieren.');
     count=0;scoreSubmission=null;$('count').textContent='0';$('stageCounter').textContent='00 KLÄNGE';
-    scoreStatus('Neue Runde gestartet. Bereits eingetragene Scores bleiben erhalten.');
+    scoreStatus('Zählung zurückgesetzt. Bereits gespeicherte Ergebnisse bleiben erhalten.');
   });
   void loadScores();
 
