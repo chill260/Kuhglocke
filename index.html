@@ -163,6 +163,19 @@
       </div>
     </section>
     <div class="bottom"><div class="stat"><span aria-hidden="true">🔔</span><b id="count">0</b> Mal gebimmelt</div><div class="stat"><div class="live-level" id="levels" aria-label="Bewegungsstärke"><span></span><span></span><span></span><span></span></div><span>Bewegung</span></div></div>
+
+    <section class="settings leaderboard" aria-labelledby="leaderboardTitle" style="margin-top:20px">
+      <div class="setting-header"><h2 id="leaderboardTitle">🏆 Die Bimmel-Top-10</h2><button class="test-btn" id="refreshScores" type="button" style="padding:7px 10px">↻ Laden</button></div>
+      <p style="font-size:12px;color:var(--muted);line-height:1.5">Dein Spitzname und deine Anzahl sind öffentlich sichtbar. Pro Spitzname zählt der höchste Score.</p>
+      <form id="scoreForm">
+        <label for="nickname" style="font-size:13px;font-weight:760">Dein Spitzname</label>
+        <input id="nickname" name="nickname" maxlength="24" minlength="2" required autocomplete="nickname" placeholder="Zum Beispiel Bimmel-Boss" style="width:100%;margin:8px 0 10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)">
+        <button id="submitScore" class="main-btn" type="submit" style="width:100%;min-height:46px">Aktuelle Anzahl eintragen</button>
+      </form>
+      <p id="scoreMessage" role="status" aria-live="polite" style="font-size:12px;line-height:1.5;color:var(--muted)">Noch kein Score eingetragen.</p>
+      <ol id="leaderboardList" style="padding:0;list-style:none;margin:16px 0 0"></ol>
+      <button id="resetCount" class="test-btn" type="button" style="width:100%;padding:10px;margin-top:12px">Zählung neu starten</button>
+    </section>
     <p class="foot">Funktioniert bei geöffneter Seite und eingeschaltetem Bildschirm. Bewegung braucht einen sicheren Browser-Kontext und ggf. eine Freigabe. Lokale Dateivorschauen unterstützen Sensoren nicht immer.</p>
     <p class="privacy">🔊 Klangvarianten einer <a href="https://commons.wikimedia.org/wiki/File:Cowbell.ogg" target="_blank" rel="noopener noreferrer">gemeinfreien Kuhglocken-Aufnahme (Freddythehat / Wikimedia Commons)</a>. Der Glockenschlag ist eingebettet und auch ohne Internet abspielbar.</p>
   </main>
@@ -679,6 +692,92 @@
       toggle.disabled=false;
     }
   });
+
+  // Only publishable credentials belong here. Bell/audio remain independent.
+  const SCORE_API_URL = "https://bzfesebnihbzcpktqdkk.supabase.co";
+  const SCORE_API_KEY = "sb_publishable__NAVAzGfoBOT47FXrvwfkQ_SsBqzvnz";
+  const nicknameInput=$('nickname'), scoreMessage=$('scoreMessage');
+  let scoreSubmission=null, scoreBusy=false, scoresLoading=false;
+  try {nicknameInput.value=localStorage.getItem('cowbell-nickname-v1')||'';} catch(_) {}
+  function scoreStatus(message){scoreMessage.textContent=message;}
+  async function scoreRequest(path,options={}) {
+    if(!SCORE_API_URL || !SCORE_API_KEY) throw new Error('Die Rangliste wird noch eingerichtet.');
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),15000);
+    try {
+      const response=await fetch(SCORE_API_URL+'/rest/v1/'+path,{
+        ...options,signal:controller.signal,
+        headers:{apikey:SCORE_API_KEY,'Content-Type':'application/json',...options.headers}
+      });
+      if(!response.ok) {
+        if(response.status===409) return null; // An identical submission already arrived.
+        throw new Error('Rangliste momentan nicht erreichbar. Bitte später erneut versuchen.');
+      }
+      const body=await response.text();
+      return body?JSON.parse(body):null;
+    } finally {clearTimeout(timeout);}
+  }
+  async function loadScores() {
+    if(scoresLoading) return;
+    scoresLoading=true;
+    $('refreshScores').disabled=true;
+    try {
+      const scores=await scoreRequest('cowbell_leaderboard?select=nickname,score&order=score.desc,nickname.asc&limit=10');
+      const list=$('leaderboardList');list.replaceChildren();
+      if(!scores.length) {
+        const item=document.createElement('li');item.textContent='Die Weide ist noch leer. Hol dir Platz 1! 🐄';list.append(item);
+      }
+      scores.forEach((score,index)=>{
+        const item=document.createElement('li');
+        item.style.cssText='display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)';
+        const name=document.createElement('span'),value=document.createElement('strong');
+        name.textContent=(index<3?['🥇','🥈','🥉'][index]:String(index+1)+'.')+' '+score.nickname;
+        value.textContent=Number(score.score).toLocaleString('de-DE')+' 🔔';
+        item.append(name,value);list.append(item);
+      });
+      return true;
+    } catch(e) {
+      scoreStatus(e.name==='AbortError'?'Die Rangliste antwortet gerade nicht. Bitte erneut versuchen.':e.message);
+      return false;
+    } finally {scoresLoading=false;$('refreshScores').disabled=false;}
+  }
+  $('scoreForm').addEventListener('submit',async event=>{
+    event.preventDefault();
+    if(scoreBusy) return;
+    const nickname=nicknameInput.value.trim().replace(/\s+/g,' ');
+    if(nickname.length<2 || nickname.length>24 || /[\u0000-\u001f\u007f]/.test(nickname)) {
+      scoreStatus('Bitte einen Spitznamen mit 2–24 Zeichen eingeben.');return;
+    }
+    if(count<1){scoreStatus('Erst bimmeln, dann glänzen! 🔔');return;}
+    if(count>1000000){scoreStatus('Maximal 1.000.000 Bimmels pro Eintrag.');return;}
+    const submittedCount=count;
+    if(!scoreSubmission || scoreSubmission.nickname!==nickname || scoreSubmission.score!==submittedCount) {
+      const bytes=crypto.getRandomValues(new Uint8Array(16));
+      bytes[6]=(bytes[6]&15)|64;bytes[8]=(bytes[8]&63)|128;
+      const hex=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
+      const id=hex.slice(0,8)+'-'+hex.slice(8,12)+'-'+hex.slice(12,16)+'-'+hex.slice(16,20)+'-'+hex.slice(20);
+      scoreSubmission={submission_id:id,nickname,score:submittedCount};
+    }
+    scoreBusy=true;$('submitScore').disabled=true;
+    scoreStatus('Score wird eingetragen …');
+    try {
+      await scoreRequest('cowbell_scores',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(scoreSubmission)});
+      try{localStorage.setItem('cowbell-nickname-v1',nickname);}catch(_){}
+      scoreStatus('✓ '+submittedCount.toLocaleString('de-DE')+' Bimmels eingetragen!');
+      await loadScores();
+    } catch(e) {
+      scoreStatus(e.name==='AbortError'?'Keine Antwort. Bitte erneut versuchen – derselbe Eintrag wird nicht doppelt gespeichert.':e.message);
+    } finally {scoreBusy=false;$('submitScore').disabled=false;}
+  });
+  $('refreshScores').addEventListener('click',()=>void loadScores());
+  $('resetCount').addEventListener('click',()=>{
+    if(scoreBusy) return;
+    stopListening('Neue Runde! Bewegung aktivieren und losbimmeln.');
+    count=0;scoreSubmission=null;$('count').textContent='0';$('stageCounter').textContent='00 KLÄNGE';
+    scoreStatus('Neue Runde gestartet. Bereits eingetragene Scores bleiben erhalten.');
+  });
+  void loadScores();
+
 })();
 </script>
 </body>
