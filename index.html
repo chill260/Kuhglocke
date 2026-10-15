@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#142924">
+  <meta name="description" content="Die Kuhglocke für die Hosentasche: Handy bewegen und bimmeln lassen.">
+  <title>Kuhglocke · Bimmel!</title>
+  <style>
+    :root { color-scheme: light; --ink:#192d28; --muted:#6b7469; --paper:#f7f4ea; --card:#fffdf7; --green:#18382e; --green2:#264b3b; --ochre:#dfa64b; --line:#dfded2; }
+    * { box-sizing:border-box; }
+    html { -webkit-tap-highlight-color:transparent; }
+    body { margin:0; min-height:100dvh; background:var(--paper); color:var(--ink); font-family: ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    body:before { content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 50% -12%,#ffebca 0%,transparent 49%); }
+    button,input { font:inherit; }
+    button { cursor:pointer; }
+    button:focus-visible,input:focus-visible { outline:3px solid #d7a54d; outline-offset:4px; }
+    .app { max-width:490px; margin:0 auto; padding:22px 20px max(26px,env(safe-area-inset-bottom)); }
+    .topbar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:24px; }
+    .brand { display:flex; gap:9px; align-items:center; font-size:13px; letter-spacing:.19em; font-weight:850; }
+    .brand-mark { width:32px;height:32px;display:grid;place-items:center;border-radius:11px;background:#e9dfc9;color:#6a4a24;font-size:21px; }
+    .version { font-size:11px;letter-spacing:.08em;color:#828476;font-weight:750; }
+    .eyebrow { display:flex; align-items:center; gap:7px; color:#8b795e; font-size:11px; letter-spacing:.19em; font-weight:850; text-transform:uppercase; margin-bottom:9px; }
+    .eyebrow:before { content:"";width:17px;height:2px;background:#c49a5b;border-radius:3px; }
+    h1 { font-size:clamp(37px,10vw,51px);line-height:1.04;letter-spacing:-.055em; font-weight:850;margin:0 0 12px; }
+    h1 em { font-family:Georgia,"Times New Roman",serif;font-style:italic;font-weight:500;color:#b78341; }
+    .sub { color:var(--muted);line-height:1.55;margin:0 0 23px;font-size:14px; }
+    .stage { position:relative;overflow:hidden;border-radius:28px;background:linear-gradient(150deg,#214638 0%,#16352c 64%,#0f2826 100%);height:315px;box-shadow:0 17px 35px #1b322817;isolation:isolate; }
+    .stage:before { content:"";position:absolute;width:280px;height:280px;border:1px solid #ffffff1b;border-radius:50%;left:50%;top:48%;transform:translate(-50%,-50%);box-shadow:0 0 0 48px #ffffff07,0 0 0 91px #ffffff05; }
+    .stage:after { content:"";position:absolute;inset:auto 0 0;height:85px;background:linear-gradient(0deg,#0e2b278e,transparent);pointer-events:none; }
+    .top-stage { position:absolute;z-index:2;top:20px;left:20px;right:20px;display:flex;justify-content:space-between;align-items:center;gap:10px; }
+    .stage-tag { border:1px solid #ffffff33; border-radius:30px;padding:7px 11px;color:#d8e9d5;font-weight:750;letter-spacing:.11em;font-size:10px;backdrop-filter:blur(3px); }
+    .status-dot {height:7px;width:7px;border-radius:50%;background:#d2aa72;display:inline-block;margin-right:6px;box-shadow:0 0 0 3px #ffffff13; }
+    .status-dot.live { background:#a5f0af;box-shadow:0 0 0 4px #a5f0af24; }
+    .sound-rings {position:absolute;left:50%;top:48%;width:0;height:0;pointer-events:none; }
+    .sound-rings span {position:absolute;border:2px solid #eaca836b;border-radius:50%;width:190px;height:190px;transform:translate(-50%,-50%) scale(.55);opacity:0;}
+    .stage.ringing .sound-rings span:nth-child(1) { animation:wave 740ms ease-out; }
+    .stage.ringing .sound-rings span:nth-child(2) { animation:wave 740ms ease-out 110ms; }
+    @keyframes wave { 0%{opacity:.7;transform:translate(-50%,-50%) scale(.52)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.55)} }
+    #bellHit { position:absolute;inset:36px 20px 42px;border:0;background:none;display:grid;place-items:center;width:calc(100% - 40px);color:inherit;touch-action:manipulation; }
+    #bellSVG { height:241px;width:252px;overflow:visible;filter:drop-shadow(0 15px 16px #050b0a55); }
+    #bellPivot {transform-origin:126px 38px;transition:transform 120ms ease-out;}
+    .stage.ringing #bellPivot {animation:swing .61s cubic-bezier(.25,.6,.25,1);}
+    @keyframes swing{0%{transform:rotate(0deg)}19%{transform:rotate(18deg)}47%{transform:rotate(-13deg)}74%{transform:rotate(7deg)}100%{transform:rotate(0deg)}}
+    .stage-hint { position:absolute;z-index:2;bottom:18px;left:0;right:0;text-align:center;letter-spacing:.035em;font-size:12px;color:#c8dbca;pointer-events:none; }
+    .stage-hint strong { color:#f4d89b; }
+    .controls { display:grid;grid-template-columns:1fr auto;gap:10px;margin:17px 0 10px; }
+    .main-btn { background:var(--green);border:1px solid var(--green);color:white;display:flex;align-items:center;justify-content:center;gap:9px;border-radius:17px;min-height:59px;font-weight:780;font-size:15px;box-shadow:0 6px 16px #17382e23; }
+    .main-btn.active {background:#e8e9db;color:#294133;border-color:#d2d6c6;box-shadow:none;}
+    .test-btn { padding:0 18px;border:1px solid #deddd1;background:#fffdf8;color:#273d33;border-radius:17px;font-weight:760;font-size:13px; }
+    .btn-icon {font-size:19px;line-height:1;}
+    .feedback { min-height:38px; display:flex;align-items:center;gap:9px;font-size:12px;line-height:1.5;color:#697568;padding:1px 4px 12px; }
+    .feedback strong {color:#2e5745;}
+    .feedback-icon {width:17px;text-align:center;flex-shrink:0;}
+    .settings {background:var(--card);border:1px solid #eae7db;box-shadow:0 4px 22px #48402c08;border-radius:23px;padding:21px 20px 19px;}
+    .setting-header {display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:19px;}
+    h2 {font-size:16px;letter-spacing:-.025em;margin:0;font-weight:800;}
+    .small-tag {font-size:10px;color:#9b875e;background:#f7edd9;border-radius:30px;padding:5px 8px;font-weight:800;letter-spacing:.05em;}
+    .range-group + .range-group {margin-top:19px;}
+    .range-label {display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:12px;}
+    .range-label label {font-size:13px;font-weight:760;}
+    .range-value { font-variant-numeric:tabular-nums;color:#ad7f3c;font-weight:800;font-size:12px;}
+    input[type=range] {width:100%;height:6px;border-radius:4px;appearance:none;-webkit-appearance:none;background:linear-gradient(to right,#cfa565 var(--fill,50%),#e8e8db var(--fill,50%));cursor:pointer;display:block;margin:0;}
+    input[type=range]::-webkit-slider-thumb {-webkit-appearance:none;width:21px;height:21px;border-radius:50%;border:4px solid white;background:#c58c40;box-shadow:0 1px 7px #1e241d35;}
+    input[type=range]::-moz-range-thumb {width:14px;height:14px;border-radius:50%;border:4px solid white;background:#c58c40;box-shadow:0 1px 7px #1e241d35;}
+    .range-ends {display:flex;justify-content:space-between;color:#9a9f91;font-size:10px;margin-top:9px;}
+    .bottom {display:flex;justify-content:space-between;align-items:center;margin:19px 1px 5px;gap:10px;}
+    .stat {font-size:12px;color:#758174;display:flex;align-items:center;gap:7px;}
+    .stat b {font-size:15px;color:#344a3b;font-variant-numeric:tabular-nums;}
+    .live-level {display:flex;align-items:end;gap:3px;height:17px;}
+    .live-level span {width:4px;border-radius:2px;background:#d4d8c6;height:5px;transition:height 110ms ease,background 110ms ease;}
+    .live-level span:nth-child(2){height:9px}.live-level span:nth-child(3){height:13px}.live-level span:nth-child(4){height:17px}
+    .foot {font-size:11px;color:#959a8e;text-align:center;margin:20px 6px 0;line-height:1.55;}
+    .privacy {font-size:11px;color:#9d9f93;text-align:center;margin-top:7px;}
+    @media (max-height:780px){.topbar{margin-bottom:16px}.sub{margin-bottom:17px}.stage{height:275px}#bellSVG{height:221px}.settings{padding:17px 20px}.range-group + .range-group{margin-top:14px}}
+    @media (prefers-reduced-motion:reduce){.stage.ringing #bellPivot,.stage.ringing .sound-rings span{animation-duration:.01ms;}}
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar"><div class="brand"><span class="brand-mark" aria-hidden="true">♧</span> ALM<span style="color:#b58953">.</span>LAB</div><span class="version">EDITION 01 / 2026</span></header>
+    <div class="eyebrow">Glockenklang to go</div>
+    <h1>Mehr <em>Bimmel.</em><br>Weniger Blabla.</h1>
+    <p class="sub">Deine eigene Kuhglocke für die Hosentasche. Handy bewegen, und schon klingt die Alm. 🐄</p>
+
+    <section class="stage" id="stage" aria-label="Kuhglocke">
+      <div class="top-stage"><div class="stage-tag"><span class="status-dot" id="dot"></span><span id="stageStatus">BEREIT</span></div><div class="stage-tag" id="stageCounter">00 KLÄNGE</div></div>
+      <div class="sound-rings" aria-hidden="true"><span></span><span></span></div>
+      <button id="bellHit" type="button" aria-label="Kuhglocke antippen und läuten">
+        <svg id="bellSVG" viewBox="0 0 252 255" role="img" aria-label="Goldene Kuhglocke">
+          <defs>
+            <linearGradient id="bellGold" x1="0" y1="0" x2="1" y2=".25"><stop offset="0" stop-color="#936329"/><stop offset=".16" stop-color="#dbad5e"/><stop offset=".38" stop-color="#f0cc83"/><stop offset=".7" stop-color="#bc8336"/><stop offset="1" stop-color="#8e5a25"/></linearGradient>
+            <linearGradient id="bellBase" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2cd7a"/><stop offset="1" stop-color="#946029"/></linearGradient>
+            <linearGradient id="leather" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5a3924"/><stop offset=".48" stop-color="#90603c"/><stop offset="1" stop-color="#3a271c"/></linearGradient>
+          </defs>
+          <g id="bellPivot">
+            <!-- Leather strap -->
+            <path d="M117 31 L117 10 Q117 4 126 4 Q135 4 135 10 L135 31" fill="none" stroke="url(#leather)" stroke-width="15" stroke-linecap="round"/>
+            <path d="M119 30L119 13M133 13L133 30" fill="none" stroke="#c49365" stroke-width="1.2" opacity=".7" />
+            <path d="M111 29 Q126 20 141 29 L144 43 Q126 53 108 43Z" fill="#70502d" stroke="#d0a36a" stroke-width="3"/>
+            <!-- Cowbell body -->
+            <path d="M91 52 Q126 45 161 52 L199 199 Q126 219 53 199Z" fill="url(#bellGold)" stroke="#6f461d" stroke-width="4" stroke-linejoin="round"/>
+            <path d="M91 53 Q126 46 161 53" fill="none" stroke="#ffe3a3" stroke-width="2.5" opacity=".85"/>
+            <path d="M95 69 L69 190" fill="none" stroke="#fff4c6" stroke-width="6" stroke-linecap="round" opacity=".26"/>
+            <path d="M160 62 L187 185" fill="none" stroke="#4f2f15" stroke-width="9" stroke-linecap="round" opacity=".2"/>
+            <path d="M54 199 Q126 218 199 199 L201 212 Q128 233 51 212Z" fill="url(#bellBase)" stroke="#613a1a" stroke-width="3"/>
+            <path d="M53 212 Q126 229 201 212" fill="none" stroke="#ffe5a6" stroke-width="2" opacity=".75"/>
+            <path d="M64 210 Q126 227 188 210" fill="none" stroke="#3e2819" stroke-width="2" opacity=".7"/>
+            <path d="M91 215 Q126 224 164 215 Q153 240 126 240 Q103 240 91 215Z" fill="#241a12" opacity=".8"/>
+            <path d="M112 226 Q126 231 140 226 L139 239 Q126 248 113 239Z" fill="#b88238" stroke="#5c411f" stroke-width="2"/>
+            <path d="M103 87 Q126 75 149 87" fill="none" stroke="#fbe6b5" stroke-width="2.5" stroke-linecap="round" opacity=".29"/>
+          </g>
+          <g fill="#eac77b" opacity=".7"><circle cx="34" cy="91" r="2.1"/><circle cx="216" cy="111" r="2.1"/><path d="M27 151v11m-5-5h10M225 59v12m-6-6h12" stroke="#eac77b" stroke-width="1.7" stroke-linecap="round"/></g>
+        </svg>
+      </button>
+      <div class="stage-hint" id="stageHint">Tipp auf die Glocke für ein <strong>Probebimmeln</strong></div>
+    </section>
+
+    <div class="controls">
+      <button class="main-btn" id="toggle" type="button"><span class="btn-icon" id="startIcon">▶</span><span id="startText">Bewegung aktivieren</span></button>
+      <button class="test-btn" id="test" type="button">🔔 Test</button>
+    </div>
+    <div class="feedback" role="status" aria-live="polite"><span class="feedback-icon" id="feedbackIcon">✦</span><span id="feedback">Tippe auf „Bewegung aktivieren“ und schwing dein Handy.</span></div>
+
+    <section class="settings" aria-label="Glocken-Einstellungen">
+      <div class="setting-header"><h2>Feintuning</h2><span class="small-tag">ECHTER KUHGLOCKENKLANG</span></div>
+      <p id="soundDescription" style="margin:0 0 18px;color:var(--muted);font-size:12px;line-height:1.5">🔔 Echte Glockenaufnahme wird geladen …</p>
+      <div class="range-group">
+        <div class="range-label"><label for="sensitivity">Empfindlichkeit</label><span class="range-value" id="sensValue">Mittel</span></div>
+        <input type="range" id="sensitivity" min="1" max="10" step="1" value="6" aria-label="Empfindlichkeit der Bewegung">
+        <div class="range-ends"><span>Kräftig schütteln</span><span>Sanft schwingen</span></div>
+      </div>
+      <div class="range-group">
+        <div class="range-label"><label for="volume">Lautstärke</label><span class="range-value" id="volumeValue">80 %</span></div>
+        <input type="range" id="volume" min="0" max="100" step="1" value="80" aria-label="Lautstärke der Kuhglocke">
+        <div class="range-ends"><span>Leise</span><span>Volle Alm</span></div>
+      </div>
+    </section>
+    <div class="bottom"><div class="stat"><span aria-hidden="true">🔔</span><b id="count">0</b> Mal gebimmelt</div><div class="stat"><div class="live-level" id="levels" aria-label="Bewegungsstärke"><span></span><span></span><span></span><span></span></div><span>Bewegung</span></div></div>
+    <p class="foot">Funktioniert bei geöffneter Seite und eingeschaltetem Bildschirm. Für Bewegungssensoren kann HTTPS erforderlich sein.</p>
+    <p class="privacy">🔊 Originalton: <a href="https://commons.wikimedia.org/wiki/File:Cowbell.ogg" target="_blank" rel="noopener noreferrer">Freddythehat / Wikimedia Commons</a> (gemeinfrei). Der Ton wird beim Öffnen online geladen; keine Anmeldung nötig.</p>
+  </main>
+<script>
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const stage = $('stage');
+  const toggle = $('toggle');
+  const sensitivity = $('sensitivity');
+  const volume = $('volume');
+  const bars = Array.from($('levels').children);
+  let audioCtx = null, master = null;
+  // Gemeinfreie Aufnahme einer echten Kuhglocke, Wikimedia Commons / Freddythehat.
+  // Das Web-Audio-Sample wird nur einmal geladen und bei jedem Schwingen neu angespielt.
+  const REAL_BELL_URL = 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Cowbell.ogg';
+  let sampleBuffer = null, sampleOffset = 0, sampleLoading = null, sampleUnavailable = false;
+  const sampleDataPromise = fetch(REAL_BELL_URL, {mode:'cors'})
+    .then(response => {
+      if (!response.ok) throw new Error('Glockenton: HTTP ' + response.status);
+      return response.arrayBuffer();
+    })
+    .catch(() => null);
+  let enabled = false, gotSensorData = false, count = 0;
+  let lastRing = 0, lastLevel = 0, peakArmed = true;
+  let lastAnimationTimer = null, sensorTimeout = null;
+  const gravity = [0,0,0];
+  let gravityReady = false;
+  let lastVec = null;
+  const storageKey = 'almlab-cowbell-settings-v1';
+
+  try {
+    const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    if (Number.isFinite(saved.sensitivity)) sensitivity.value = Math.max(1,Math.min(10,saved.sensitivity));
+    if (Number.isFinite(saved.volume)) volume.value = Math.max(0,Math.min(100,saved.volume));
+  } catch (_) {}
+
+  function store() {
+    try { localStorage.setItem(storageKey, JSON.stringify({sensitivity:+sensitivity.value, volume:+volume.value})); } catch (_) {}
+  }
+  function styleRange(el) { el.style.setProperty('--fill', ((+el.value - +el.min)/(+el.max-+el.min)*100)+'%'); }
+  function displaySettings() {
+    styleRange(sensitivity); styleRange(volume);
+    const s = +sensitivity.value;
+    $('sensValue').textContent = s <= 3 ? 'Niedrig' : s <= 6 ? 'Mittel' : s <= 8 ? 'Hoch' : 'Sehr hoch';
+    $('volumeValue').textContent = volume.value + ' %';
+    if (master) master.gain.setTargetAtTime((+volume.value/100)*0.72, audioCtx.currentTime, .025);
+    store();
+  }
+  sensitivity.addEventListener('input', displaySettings);
+  volume.addEventListener('input', displaySettings);
+  displaySettings();
+
+  function feedback(message, icon='✦') { $('feedback').textContent = message; $('feedbackIcon').textContent = icon; }
+  function setActive(value) {
+    enabled = value;
+    toggle.classList.toggle('active', enabled);
+    $('dot').classList.toggle('live',enabled);
+    $('stageStatus').textContent = enabled ? 'LIVE' : 'BEREIT';
+    $('startIcon').textContent = enabled ? 'Ⅱ' : '▶';
+    $('startText').textContent = enabled ? 'Bewegung stoppen' : 'Bewegung aktivieren';
+    $('stageHint').innerHTML = enabled ? 'Schwing dein Handy und lass es <strong>bimmeln!</strong>' : 'Tipp auf die Glocke für ein <strong>Probebimmeln</strong>';
+  }
+
+  function initAudio() {
+    if (audioCtx) return;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) throw new Error('Audio wird von diesem Browser nicht unterstützt.');
+    audioCtx = new AC();
+    master = audioCtx.createGain();
+    master.gain.value = (+volume.value/100)*0.72;
+    const limiter = audioCtx.createDynamicsCompressor();
+    limiter.threshold.value = -13;
+    limiter.knee.value = 9;
+    limiter.ratio.value = 7;
+    limiter.attack.value = .003;
+    limiter.release.value = .12;
+    master.connect(limiter);
+    limiter.connect(audioCtx.destination);
+  }
+
+
+  // Ermittelt den ersten hörbaren Glockenschlag aus der Originalaufnahme,
+  // damit nicht bei jeder Handybewegung das ganze Rhythmusmuster abgespielt wird.
+  function findFirstStrike(buffer) {
+    const samples = buffer.getChannelData(0), rate = buffer.sampleRate;
+    const step = Math.max(1,Math.floor(rate*.012));
+    const energies = [];
+    const stop = Math.min(samples.length, Math.floor(rate*5));
+    for(let i=0;i<stop;i+=step) {
+      let power=0, len=Math.min(step,stop-i);
+      for(let j=0;j<len;j+=3) power+=samples[i+j]*samples[i+j];
+      energies.push(Math.sqrt(power / Math.max(1,Math.ceil(len/3))));
+    }
+    const max=Math.max(...energies,0);
+    if(max<.004) return 0;
+    for(let i=1;i<energies.length;i++){
+      const prev=energies[Math.max(0,i-7)];
+      if(energies[i]>max*.20 && energies[i]>prev*1.65) {
+        return Math.max(0,i*step/rate-.018);
+      }
+    }
+    return 0;
+  }
+
+  async function prepareRealBell() {
+    if(sampleBuffer) return true;
+    if(sampleUnavailable) return false;
+    if(sampleLoading) return sampleLoading;
+    sampleLoading=(async () => {
+      const bytes=await sampleDataPromise;
+      if(!bytes) throw new Error('Sounddatei nicht erreichbar');
+      initAudio();
+      sampleBuffer=await audioCtx.decodeAudioData(bytes.slice(0));
+      if(sampleBuffer.duration<.2) throw new Error('Sounddatei zu kurz');
+      sampleOffset=findFirstStrike(sampleBuffer);
+      $('soundDescription').textContent='✓ Echte Kuhglocke geladen. Jetzt wird es alpin!';
+      return true;
+    })().catch(()=>{
+      sampleUnavailable=true;
+      $('soundDescription').textContent='⚠ Aufnahme nicht erreichbar. Ersatzklang ist aktiv.';
+      return false;
+    });
+    return sampleLoading;
+  }
+
+  function recordedBell(strength=1) {
+    const t=audioCtx.currentTime+.005;
+    const source=audioCtx.createBufferSource();
+    source.buffer=sampleBuffer;
+    source.playbackRate.value=.83+Math.random()*.11;
+    const gain=audioCtx.createGain();
+    const duration=Math.max(.12,Math.min(1.05,sampleBuffer.duration-sampleOffset-.02));
+    const level=Math.min(1.14,Math.max(.52,strength))*.92;
+    gain.gain.setValueAtTime(.0001,t);
+    gain.gain.linearRampToValueAtTime(level,t+.016);
+    gain.gain.setValueAtTime(level*.75,t+Math.min(.13,duration*.3));
+    gain.gain.exponentialRampToValueAtTime(.0001,t+duration);
+    source.connect(gain);
+    gain.connect(master);
+    source.start(t,sampleOffset,duration);
+    source.stop(t+duration+.01);
+  }
+
+  // Fallback: künstlicher Glockenton, falls die Originalaufnahme nicht erreichbar ist.
+  function synthBell(strength=1) {
+    initAudio();
+    if (audioCtx.state !== 'running') { audioCtx.resume().catch(()=>{}); }
+    const t = audioCtx.currentTime + .008;
+    const impact = Math.min(1.18, Math.max(.4,strength));
+    const partials = [
+      {freq:487, amp:.26, decay:.92},
+      {freq:733, amp:.23, decay:.86},
+      {freq:1162,amp:.20, decay:.57},
+      {freq:1546,amp:.12, decay:.42},
+      {freq:2234,amp:.09, decay:.31},
+      {freq:3184,amp:.065,decay:.18}
+    ];
+    for (let i=0;i<partials.length;i++) {
+      const p=partials[i];
+      const osc=audioCtx.createOscillator();
+      osc.type = i<2?'sine':'triangle';
+      osc.frequency.setValueAtTime(p.freq*(1+Math.random()*.006), t);
+      osc.frequency.exponentialRampToValueAtTime(p.freq*.995,t+.19);
+      const g=audioCtx.createGain();
+      const onset=(i>1 ? .003: .007);
+      g.gain.setValueAtTime(.0001,t);
+      g.gain.exponentialRampToValueAtTime(Math.max(.0002,p.amp*impact),t+onset);
+      g.gain.exponentialRampToValueAtTime(.0001,t+p.decay);
+      osc.connect(g);g.connect(master);osc.start(t);osc.stop(t+p.decay+.035);
+    }
+    const len = Math.round(audioCtx.sampleRate*.075);
+    const noiseBuffer=audioCtx.createBuffer(1,len,audioCtx.sampleRate);
+    const data=noiseBuffer.getChannelData(0);
+    for(let i=0;i<len;i++) data[i] = (Math.random()*2-1)*(1-i/len);
+    const noise=audioCtx.createBufferSource();noise.buffer=noiseBuffer;
+    const filter=audioCtx.createBiquadFilter();filter.type='bandpass';filter.frequency.value=2800;filter.Q.value=.67;
+    const ng=audioCtx.createGain();ng.gain.setValueAtTime(.0001,t);
+    ng.gain.exponentialRampToValueAtTime(.37*impact,t+.002);
+    ng.gain.exponentialRampToValueAtTime(.0001,t+.073);
+    noise.connect(filter);filter.connect(ng);ng.connect(master);
+    noise.start(t);noise.stop(t+.078);
+  }
+
+  function animateRing() {
+    stage.classList.remove('ringing');
+    void stage.offsetWidth;
+    stage.classList.add('ringing');
+    clearTimeout(lastAnimationTimer);
+    lastAnimationTimer = setTimeout(() => stage.classList.remove('ringing'),760);
+  }
+  function ring(strength=1) {
+    try {
+      initAudio();
+      if(sampleBuffer) recordedBell(strength);
+      else { synthBell(strength); void prepareRealBell(); }
+    } catch (e) { feedback(e.message,'⚠');return; }
+    count++;
+    $('count').textContent = count.toLocaleString('de-DE');
+    $('stageCounter').textContent = String(count).padStart(2,'0') + (count === 1 ? ' KLANG' : ' KLÄNGE');
+    animateRing();
+  }
+  async function testRing() {
+    try {
+      initAudio();
+      await audioCtx.resume();
+      await prepareRealBell();
+    } catch (_) { /* Fallback unten */ }
+    ring();
+  }
+  $('test').addEventListener('click', testRing);
+  $('bellHit').addEventListener('click', testRing);
+
+  function resetDetection() { gravityReady=false;lastVec=null;lastRing=0;lastLevel=0;peakArmed=true;gotSensorData=false; }
+  function motionHandler(event) {
+    if (!enabled) return;
+    let acc=event.acceleration;
+    let x,y,z;
+    if (acc && [acc.x,acc.y,acc.z].every(Number.isFinite)) {
+      x=acc.x;y=acc.y;z=acc.z;
+    } else {
+      acc=event.accelerationIncludingGravity;
+      if (!acc || ![acc.x,acc.y,acc.z].every(Number.isFinite)) return;
+      const a=[acc.x,acc.y,acc.z];
+      if (!gravityReady) { for(let i=0;i<3;i++) gravity[i]=a[i];gravityReady=true; }
+      for(let i=0;i<3;i++) gravity[i]=gravity[i]*.91 + a[i]*.09;
+      x=a[0]-gravity[0];y=a[1]-gravity[1];z=a[2]-gravity[2];
+    }
+    if (!gotSensorData) {
+      gotSensorData=true;
+      clearTimeout(sensorTimeout);
+      feedback('Sensor aktiv. Jetzt dein Handy bewegen!','✓');
+    }
+    const accel=Math.hypot(x,y,z);
+    const rotation=event.rotationRate;
+    const spin=(rotation && [rotation.alpha,rotation.beta,rotation.gamma].every(Number.isFinite))
+      ? Math.hypot(rotation.alpha,rotation.beta,rotation.gamma) : 0;
+    const s=+sensitivity.value;
+    // Higher sensitivity = lower necessary movement, both for shakes and swings.
+    const accelThreshold=10.0-(s-1)*.87; // 10.0 to 2.17 m/s²
+    const spinThreshold=200-(s-1)*17;  // 200 to 47 degrees/s
+    let jerk=0;
+    if (lastVec) jerk=Math.hypot(x-lastVec[0],y-lastVec[1],z-lastVec[2]);
+    lastVec=[x,y,z];
+    const drive=Math.max(accel/accelThreshold,spin/spinThreshold,jerk/(accelThreshold*1.8));
+    const now=performance.now();
+    // Hysteresis prevents noisy inputs from generating a flood of hits.
+    if (drive < .63) peakArmed=true;
+    if (drive>=1 && (peakArmed || now-lastRing>530) && now-lastRing>235) {
+      lastRing=now;peakArmed=false;
+      ring(Math.min(1.16,.65+drive*.18));
+    }
+    if(now-lastLevel>65) {
+      lastLevel=now;
+      const on=Math.min(4,Math.max(0,Math.round(drive*2.3)));
+      bars.forEach((b,i)=>{b.style.background=i<on?'#c9994f':'#d4d8c6';b.style.opacity=i<on?'1':'.7';});
+    }
+  }
+  function stopListening(message='Bewegung gestoppt. Tippe auf Start, um weiterzubimmeln.') {
+    window.removeEventListener('devicemotion',motionHandler);
+    clearTimeout(sensorTimeout);
+    resetDetection();setActive(false);
+    feedback(message,'✦');
+    bars.forEach(b=>{b.style.background='#d4d8c6';b.style.opacity='.7';});
+  }
+  toggle.addEventListener('click', async () => {
+    if(enabled) {stopListening();return;}
+    if (!('DeviceMotionEvent' in window)) {
+      feedback('Dieser Browser unterstützt leider keine Bewegungssensoren. Der Glockentest funktioniert trotzdem.','⚠');
+      return;
+    }
+    // The permission request MUST be made directly in this click event (iPhone/iPad).
+    let permissionPromise;
+    try {
+      permissionPromise = (typeof DeviceMotionEvent.requestPermission === 'function')
+        ? DeviceMotionEvent.requestPermission() : Promise.resolve('granted');
+    } catch (e) {feedback('Sensorfreigabe fehlgeschlagen: '+e.message,'⚠');return;}
+    try {initAudio();await audioCtx.resume();void prepareRealBell();}
+    catch(e) {feedback('Ton konnte nicht gestartet werden: '+e.message,'⚠');return;}
+    try {
+      if ((await permissionPromise) !== 'granted') {
+        feedback('Bewegungssensor nicht freigegeben. Bitte Berechtigung erlauben.','⚠');
+        return;
+      }
+      resetDetection();
+      setActive(true);
+      window.addEventListener('devicemotion',motionHandler,{passive:true});
+      feedback('Sensor wird verbunden … bitte Handy bewegen.','◌');
+      sensorTimeout=setTimeout(() => {
+        if(!gotSensorData && enabled) {
+          const hint = !window.isSecureContext
+            ? 'Keine Sensordaten. Bitte die Seite über HTTPS öffnen (nicht HTTP).'
+            : 'Keine Sensordaten. Browser-Einstellungen für Bewegungssensoren prüfen oder über HTTPS öffnen.';
+          feedback(hint,'⚠');
+        }
+      },3200);
+    } catch(e) {feedback('Zugriff auf Bewegungssensor fehlgeschlagen: '+e.message,'⚠');}
+  });
+})();
+</script>
+</body>
+</html>
