@@ -56,6 +56,19 @@
     .setting-header {display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:19px;}
     h2 {font-size:16px;letter-spacing:-.025em;margin:0;font-weight:800;}
     .small-tag {font-size:10px;color:#9b875e;background:#f7edd9;border-radius:30px;padding:5px 8px;font-weight:800;letter-spacing:.05em;}
+    .picker-header {display:flex;justify-content:space-between;align-items:baseline;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+    .picker-header strong {font-size:13px;font-weight:800;}
+    .picker-header span {font-size:10px;color:var(--muted);}
+    .bell-picker {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-bottom:23px;}
+    .bell-option {position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-height:105px;border:1.5px solid #e3e2d5;background:#fffdf6;border-radius:16px;padding:12px 11px;text-align:left;color:var(--ink);transition:background .12s ease,border-color .12s ease,transform .12s ease;}
+    .bell-option:active {transform:scale(.98);}
+    .bell-option.selected {background:#f0f4e9;border-color:#497a62;box-shadow:inset 0 0 0 1px #497a62;}
+    .bell-icon {font-size:22px;line-height:1;margin-bottom:4px;}
+    .bell-option strong {font-size:12px;font-weight:820;line-height:1.24;}
+    .bell-option small {font-size:10px;color:#839084;line-height:1.3;}
+    .bell-option.selected small {color:#567361;}
+    .bell-check {position:absolute;right:11px;top:10px;display:none;place-items:center;width:17px;height:17px;color:#fff;font-size:11px;border-radius:50%;background:#477b60;}
+    .bell-option.selected .bell-check {display:grid;}
     .range-group + .range-group {margin-top:19px;}
     .range-label {display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:12px;}
     .range-label label {font-size:13px;font-weight:760;}
@@ -124,7 +137,14 @@
 
     <section class="settings" aria-label="Glocken-Einstellungen">
       <div class="setting-header"><h2>Feintuning</h2><span class="small-tag">ECHTER KUHGLOCKENKLANG</span></div>
-      <p id="soundDescription" style="margin:0 0 18px;color:var(--muted);font-size:12px;line-height:1.5">🔔 Echte Glockenaufnahme wird geladen …</p>
+      <p id="soundDescription" style="margin:0 0 17px;color:var(--muted);font-size:12px;line-height:1.5">🔔 Originalaufnahme wird geladen …</p>
+      <div class="picker-header"><strong>Welche Glocke darf's sein?</strong><span>Antippen = Probehören</span></div>
+      <div class="bell-picker" id="bellPicker" role="group" aria-label="Kuhglocken-Auswahl">
+        <button class="bell-option selected" type="button" data-bell="classic" aria-pressed="true"><span class="bell-check" aria-hidden="true">✓</span><span class="bell-icon" aria-hidden="true">🔔</span><strong>Die Klassische</strong><small>Originalklang</small></button>
+        <button class="bell-option" type="button" data-bell="small" aria-pressed="false"><span class="bell-check" aria-hidden="true">✓</span><span class="bell-icon" aria-hidden="true">✨</span><strong>Kleine Schelle</strong><small>Hell &amp; knackig</small></button>
+        <button class="bell-option" type="button" data-bell="big" aria-pressed="false"><span class="bell-check" aria-hidden="true">✓</span><span class="bell-icon" aria-hidden="true">🏔️</span><strong>Große Almglocke</strong><small>Tief &amp; sonor</small></button>
+        <button class="bell-option" type="button" data-bell="double" aria-pressed="false"><span class="bell-check" aria-hidden="true">✓</span><span class="bell-icon" aria-hidden="true">🎶</span><strong>Doppelbimmel</strong><small>Zwei Schläge</small></button>
+      </div>
       <div class="range-group">
         <div class="range-label"><label for="sensitivity">Empfindlichkeit</label><span class="range-value" id="sensValue">Mittel</span></div>
         <input type="range" id="sensitivity" min="1" max="10" step="1" value="6" aria-label="Empfindlichkeit der Bewegung">
@@ -138,7 +158,7 @@
     </section>
     <div class="bottom"><div class="stat"><span aria-hidden="true">🔔</span><b id="count">0</b> Mal gebimmelt</div><div class="stat"><div class="live-level" id="levels" aria-label="Bewegungsstärke"><span></span><span></span><span></span><span></span></div><span>Bewegung</span></div></div>
     <p class="foot">Funktioniert bei geöffneter Seite und eingeschaltetem Bildschirm. Für Bewegungssensoren kann HTTPS erforderlich sein.</p>
-    <p class="privacy">🔊 Originalton: <a href="https://commons.wikimedia.org/wiki/File:Cowbell.ogg" target="_blank" rel="noopener noreferrer">Freddythehat / Wikimedia Commons</a> (gemeinfrei). Der Ton wird beim Öffnen online geladen; keine Anmeldung nötig.</p>
+    <p class="privacy">🔊 Klangvarianten einer <a href="https://commons.wikimedia.org/wiki/File:Cowbell.ogg" target="_blank" rel="noopener noreferrer">gemeinfreien Kuhglocken-Aufnahme (Freddythehat / Wikimedia Commons)</a>. Die Aufnahme wird online geladen.</p>
   </main>
 <script>
 (() => {
@@ -167,15 +187,24 @@
   let gravityReady = false;
   let lastVec = null;
   const storageKey = 'almlab-cowbell-settings-v1';
+  // Vier deutlich hörbare Klangvarianten derselben gemeinfreien Originalaufnahme.
+  const bellTypes = {
+    classic:{label:'Die Klassische',pitch:.93,decay:1.03,filter:4400,gain:1},
+    small:{label:'Kleine Schelle',pitch:1.47,decay:.61,filter:6500,gain:.84},
+    big:{label:'Große Almglocke',pitch:.66,decay:1.42,filter:1950,gain:1.08},
+    double:{label:'Doppelbimmel',pitch:1.04,decay:.83,filter:4600,gain:.83,secondPitch:1.34}
+  };
+  let selectedBell='classic';
 
   try {
     const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
     if (Number.isFinite(saved.sensitivity)) sensitivity.value = Math.max(1,Math.min(10,saved.sensitivity));
     if (Number.isFinite(saved.volume)) volume.value = Math.max(0,Math.min(100,saved.volume));
+    if (typeof saved.bell === 'string' && Object.prototype.hasOwnProperty.call(bellTypes,saved.bell)) selectedBell=saved.bell;
   } catch (_) {}
 
   function store() {
-    try { localStorage.setItem(storageKey, JSON.stringify({sensitivity:+sensitivity.value, volume:+volume.value})); } catch (_) {}
+    try { localStorage.setItem(storageKey, JSON.stringify({sensitivity:+sensitivity.value, volume:+volume.value, bell:selectedBell})); } catch (_) {}
   }
   function styleRange(el) { el.style.setProperty('--fill', ((+el.value - +el.min)/(+el.max-+el.min)*100)+'%'); }
   function displaySettings() {
@@ -189,6 +218,23 @@
   sensitivity.addEventListener('input', displaySettings);
   volume.addEventListener('input', displaySettings);
   displaySettings();
+
+  function updateBellSelection() {
+    document.querySelectorAll('[data-bell]').forEach(button=>{
+      const isSelected=button.dataset.bell===selectedBell;
+      button.classList.toggle('selected',isSelected);
+      button.setAttribute('aria-pressed',String(isSelected));
+    });
+    updateSoundDescription();
+  }
+  function updateSoundDescription() {
+    const label=bellTypes[selectedBell].label;
+    const state=sampleBuffer?'✓ Originalaufnahme geladen'
+      :sampleUnavailable?'⚠ Aufnahme nicht erreichbar, Ersatzklang aktiv'
+      :'◌ Originalaufnahme wird geladen';
+    $('soundDescription').textContent=state+' · '+label;
+  }
+  updateBellSelection();
 
   function feedback(message, icon='✦') { $('feedback').textContent = message; $('feedbackIcon').textContent = icon; }
   function setActive(value) {
@@ -253,72 +299,92 @@
       sampleBuffer=await audioCtx.decodeAudioData(bytes.slice(0));
       if(sampleBuffer.duration<.2) throw new Error('Sounddatei zu kurz');
       sampleOffset=findFirstStrike(sampleBuffer);
-      $('soundDescription').textContent='✓ Echte Kuhglocke geladen. Jetzt wird es alpin!';
+      updateSoundDescription();
       return true;
     })().catch(()=>{
       sampleUnavailable=true;
-      $('soundDescription').textContent='⚠ Aufnahme nicht erreichbar. Ersatzklang ist aktiv.';
+      updateSoundDescription();
       return false;
     });
     return sampleLoading;
   }
 
+  // Abspielraten und Klangfilter verändern die echte Aufnahme direkt.
+  // Die Doppelglocke bekommt einen versetzten zweiten Anschlag.
   function recordedBell(strength=1) {
-    const t=audioCtx.currentTime+.005;
-    const source=audioCtx.createBufferSource();
-    source.buffer=sampleBuffer;
-    source.playbackRate.value=.83+Math.random()*.11;
-    const gain=audioCtx.createGain();
-    const duration=Math.max(.12,Math.min(1.05,sampleBuffer.duration-sampleOffset-.02));
-    const level=Math.min(1.14,Math.max(.52,strength))*.92;
-    gain.gain.setValueAtTime(.0001,t);
-    gain.gain.linearRampToValueAtTime(level,t+.016);
-    gain.gain.setValueAtTime(level*.75,t+Math.min(.13,duration*.3));
-    gain.gain.exponentialRampToValueAtTime(.0001,t+duration);
-    source.connect(gain);
-    gain.connect(master);
-    source.start(t,sampleOffset,duration);
-    source.stop(t+duration+.01);
+    const p=bellTypes[selectedBell];
+    const t0=audioCtx.currentTime+.007;
+    function strike(rate, delay, duration, volumeFactor) {
+      const t=t0+delay;
+      const source=audioCtx.createBufferSource();
+      source.buffer=sampleBuffer;
+      source.playbackRate.value=rate*(.987+Math.random()*.026);
+      const gain=audioCtx.createGain();
+      const filter=audioCtx.createBiquadFilter();
+      filter.type='lowpass';
+      filter.frequency.value=p.filter;
+      filter.Q.value=.55;
+      const maxSourceDuration=sampleBuffer.duration-sampleOffset-.02;
+      const playDuration=Math.max(.10,Math.min(duration,maxSourceDuration/source.playbackRate.value));
+      const sourceDuration=Math.min(maxSourceDuration,playDuration*source.playbackRate.value);
+      const level=Math.min(1.15,Math.max(.42,strength))*p.gain*volumeFactor;
+      gain.gain.setValueAtTime(.0001,t);
+      gain.gain.linearRampToValueAtTime(level,t+.012);
+      gain.gain.setValueAtTime(level*.78,t+Math.min(.085,playDuration*.2));
+      gain.gain.exponentialRampToValueAtTime(.0001,t+playDuration);
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(master);
+      source.start(t,sampleOffset,sourceDuration);
+      source.stop(t+playDuration+.012);
+    }
+    strike(p.pitch,0,p.decay,1);
+    if(p.secondPitch) strike(p.secondPitch,.16,p.decay*.86,.64);
   }
 
-  // Fallback: künstlicher Glockenton, falls die Originalaufnahme nicht erreichbar ist.
+  // WebAudio-Ersatzklang bei fehlender Aufnahme, ebenfalls je Glockentyp verschieden.
   function synthBell(strength=1) {
     initAudio();
-    if (audioCtx.state !== 'running') { audioCtx.resume().catch(()=>{}); }
-    const t = audioCtx.currentTime + .008;
-    const impact = Math.min(1.18, Math.max(.4,strength));
-    const partials = [
-      {freq:487, amp:.26, decay:.92},
-      {freq:733, amp:.23, decay:.86},
-      {freq:1162,amp:.20, decay:.57},
-      {freq:1546,amp:.12, decay:.42},
-      {freq:2234,amp:.09, decay:.31},
-      {freq:3184,amp:.065,decay:.18}
-    ];
-    for (let i=0;i<partials.length;i++) {
-      const p=partials[i];
-      const osc=audioCtx.createOscillator();
-      osc.type = i<2?'sine':'triangle';
-      osc.frequency.setValueAtTime(p.freq*(1+Math.random()*.006), t);
-      osc.frequency.exponentialRampToValueAtTime(p.freq*.995,t+.19);
-      const g=audioCtx.createGain();
-      const onset=(i>1 ? .003: .007);
-      g.gain.setValueAtTime(.0001,t);
-      g.gain.exponentialRampToValueAtTime(Math.max(.0002,p.amp*impact),t+onset);
-      g.gain.exponentialRampToValueAtTime(.0001,t+p.decay);
-      osc.connect(g);g.connect(master);osc.start(t);osc.stop(t+p.decay+.035);
+    if(audioCtx.state !== 'running') audioCtx.resume().catch(()=>{});
+    const p=bellTypes[selectedBell];
+    function stroke(pitch,offset,weight,decayScale) {
+      const t=audioCtx.currentTime+.008+offset;
+      const impact=Math.min(1.18,Math.max(.4,strength))*p.gain*weight;
+      const partials=[
+        {freq:487,amp:.26,decay:.92},
+        {freq:733,amp:.23,decay:.86},
+        {freq:1162,amp:.20,decay:.57},
+        {freq:1546,amp:.12,decay:.42},
+        {freq:2234,amp:.09,decay:.31},
+        {freq:3184,amp:.065,decay:.18}
+      ];
+      for(let i=0;i<partials.length;i++){
+        const part=partials[i],d=part.decay*decayScale;
+        const osc=audioCtx.createOscillator(),g=audioCtx.createGain();
+        osc.type=i<2?'sine':'triangle';
+        const frequency=part.freq*pitch*(1+Math.random()*.006);
+        osc.frequency.setValueAtTime(frequency,t);
+        osc.frequency.exponentialRampToValueAtTime(frequency*.995,t+.19);
+        g.gain.setValueAtTime(.0001,t);
+        g.gain.exponentialRampToValueAtTime(Math.max(.0002,part.amp*impact),t+(i>1?.003:.007));
+        g.gain.exponentialRampToValueAtTime(.0001,t+d);
+        osc.connect(g);g.connect(master);osc.start(t);osc.stop(t+d+.035);
+      }
+      const len=Math.round(audioCtx.sampleRate*.075),b=audioCtx.createBuffer(1,len,audioCtx.sampleRate);
+      const data=b.getChannelData(0);
+      for(let i=0;i<len;i++) data[i]=(Math.random()*2-1)*(1-i/len);
+      const noise=audioCtx.createBufferSource();noise.buffer=b;
+      const filter=audioCtx.createBiquadFilter();
+      filter.type='bandpass';filter.frequency.value=Math.min(5500,2800*pitch);filter.Q.value=.67;
+      const ng=audioCtx.createGain();
+      ng.gain.setValueAtTime(.0001,t);
+      ng.gain.exponentialRampToValueAtTime(.33*impact,t+.002);
+      ng.gain.exponentialRampToValueAtTime(.0001,t+.072);
+      noise.connect(filter);filter.connect(ng);ng.connect(master);
+      noise.start(t);noise.stop(t+.077);
     }
-    const len = Math.round(audioCtx.sampleRate*.075);
-    const noiseBuffer=audioCtx.createBuffer(1,len,audioCtx.sampleRate);
-    const data=noiseBuffer.getChannelData(0);
-    for(let i=0;i<len;i++) data[i] = (Math.random()*2-1)*(1-i/len);
-    const noise=audioCtx.createBufferSource();noise.buffer=noiseBuffer;
-    const filter=audioCtx.createBiquadFilter();filter.type='bandpass';filter.frequency.value=2800;filter.Q.value=.67;
-    const ng=audioCtx.createGain();ng.gain.setValueAtTime(.0001,t);
-    ng.gain.exponentialRampToValueAtTime(.37*impact,t+.002);
-    ng.gain.exponentialRampToValueAtTime(.0001,t+.073);
-    noise.connect(filter);filter.connect(ng);ng.connect(master);
-    noise.start(t);noise.stop(t+.078);
+    stroke(p.pitch,0,1,p.decay);
+    if(p.secondPitch) stroke(p.secondPitch,.16,.64,p.decay*.86);
   }
 
   function animateRing() {
@@ -349,6 +415,14 @@
   }
   $('test').addEventListener('click', testRing);
   $('bellHit').addEventListener('click', testRing);
+  $('bellPicker').addEventListener('click', event => {
+    const button=event.target.closest('button[data-bell]');
+    if(!button || !bellTypes[button.dataset.bell]) return;
+    selectedBell=button.dataset.bell;
+    store();
+    updateBellSelection();
+    void testRing();
+  });
 
   function resetDetection() { gravityReady=false;lastVec=null;lastRing=0;lastLevel=0;peakArmed=true;gotSensorData=false; }
   function motionHandler(event) {
