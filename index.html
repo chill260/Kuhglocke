@@ -93,7 +93,7 @@
 </head>
 <body>
   <main class="app">
-    <header class="topbar"><div class="brand"><span class="brand-mark" aria-hidden="true">♧</span> ALM<span style="color:#b58953">.</span>LAB</div><span class="version">EDITION 01 / 2026</span></header>
+    <header class="topbar"><div class="brand"><span class="brand-mark" aria-hidden="true">♧</span> ALM<span style="color:#b58953">.</span>LAB</div><span class="version">EDITION 02 / 2026</span></header>
     <div class="eyebrow">Glockenklang to go</div>
     <h1>Mehr <em>Bimmel.</em><br>Weniger Blabla.</h1>
     <p class="sub">Deine eigene Kuhglocke für die Hosentasche. Handy bewegen, und schon klingt die Alm. 🐄</p>
@@ -139,10 +139,11 @@
     </div>
     <div class="feedback" role="status" aria-live="polite"><span class="feedback-icon" id="feedbackIcon">✦</span><span id="feedback">Tippe auf „Bewegung aktivieren“ und schwing dein Handy.</span></div>
 
+    <p id="wakeStatus" role="status" style="font-size:12px;color:var(--muted);margin:0 4px 16px">Bildschirm bleibt beim Bimmeln nach Möglichkeit eingeschaltet.</p>
     <section class="settings" aria-label="Glocken-Einstellungen">
       <div class="setting-header"><h2>Feintuning</h2><span class="small-tag">GLOCKENPHYSIK 2.0</span></div>
       <p style="font-size:12px;line-height:1.55;color:var(--muted);margin:-8px 0 15px">Die Glocke schwingt mit deinem Handy. Ein Schlag entsteht nur, wenn der Klöppel die Glockenwand trifft. Je kräftiger der Aufprall, desto lauter der Klang.</p>
-      <p id="soundDescription" style="margin:0 0 17px;color:var(--muted);font-size:12px;line-height:1.5">🔔 Originalaufnahme wird geladen …</p>
+      <p id="soundDescription" style="margin:0 0 17px;color:var(--muted);font-size:12px;line-height:1.5">🔔 Originalton eingebettet · Bereit zum Starten</p>
       <div class="picker-header"><strong>Welche Glocke darf's sein?</strong><span>Antippen = Probehören</span></div>
       <div class="bell-picker" id="bellPicker" role="group" aria-label="Kuhglocken-Auswahl">
         <button class="bell-option selected" type="button" data-bell="classic" aria-pressed="true"><span class="bell-check" aria-hidden="true">✓</span><span class="bell-icon" aria-hidden="true">🔔</span><strong>Die Klassische</strong><small>Originalklang</small></button>
@@ -162,8 +163,8 @@
       </div>
     </section>
     <div class="bottom"><div class="stat"><span aria-hidden="true">🔔</span><b id="count">0</b> Mal gebimmelt</div><div class="stat"><div class="live-level" id="levels" aria-label="Bewegungsstärke"><span></span><span></span><span></span><span></span></div><span>Bewegung</span></div></div>
-    <p class="foot">Funktioniert bei geöffneter Seite und eingeschaltetem Bildschirm. Für Bewegungssensoren kann HTTPS erforderlich sein.</p>
-    <p class="privacy">🔊 Klangvarianten einer <a href="https://commons.wikimedia.org/wiki/File:Cowbell.ogg" target="_blank" rel="noopener noreferrer">gemeinfreien Kuhglocken-Aufnahme (Freddythehat / Wikimedia Commons)</a>. Die Aufnahme wird online geladen.</p>
+    <p class="foot">Funktioniert bei geöffneter Seite und eingeschaltetem Bildschirm. Bewegung braucht einen sicheren Browser-Kontext und ggf. eine Freigabe. Lokale Dateivorschauen unterstützen Sensoren nicht immer.</p>
+    <p class="privacy">🔊 Klangvarianten einer <a href="https://commons.wikimedia.org/wiki/File:Cowbell.ogg" target="_blank" rel="noopener noreferrer">gemeinfreien Kuhglocken-Aufnahme (Freddythehat / Wikimedia Commons)</a>. Der Glockenschlag ist eingebettet und auch ohne Internet abspielbar.</p>
   </main>
 <script>
 (() => {
@@ -175,16 +176,10 @@
   const volume = $('volume');
   const bars = Array.from($('levels').children);
   let audioCtx = null, master = null;
-  // Gemeinfreie Aufnahme einer echten Kuhglocke, Wikimedia Commons / Freddythehat.
-  // Das Web-Audio-Sample wird nur einmal geladen und bei jedem Schwingen neu angespielt.
-  const REAL_BELL_URL = 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Cowbell.ogg';
+  // Isolierter Schlag aus Cowbell.ogg, Freddythehat / Wikimedia Commons (gemeinfrei).
+  // PCM-WAV ist direkt eingebettet: keine Netzwerk- oder CORS-Abhängigkeit.
+  const BELL_WAV_BASE64 = 'UklGRm48AABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YUo8AAAAAAAAAAAAAAAAAAD/////AAABAAIAAgAAAP///f/8//z///8CAAcACQAGAAAA+v/4//r/AAAGAAgABQAAAPr/+/8BAAkADQAMAAQA+//0//P/9v/9/wQADQATABAABgD7//T/9f/9/wgADwAMAAIA+f/3//3/CQAVABcADQD///T/8v/3/wAACgAQABIADgAHAP//+P/3//v/BAALAAwABgD8//f/+/8HABQAGgAUAAUA9v/v//T///8KABIAFQARAAkAAQD+//3/AAAFAAsADAAHAP//+v/6/wAADQAXABUACAD5//D/8P/7/wkAEwAWABEACQAAAPz//P8AAAUACAAJAAcAAwD+//7/AwALABMAFQANAP7/8f/u//X/AgAPABUAEgAHAP3/+P/7/wAABgAJAAcABAAAAP7//v8AAAcADwATABAABAD2/+7/8P/7/woAFQAWAA0AAAD4//j//v8EAAYABAAAAPv/+f/8/wAABQAMABEADwAGAPn/8P/u//T/AgAPABUADgACAPj/9f/7/wQACQAIAAEA+v/3//j//f8EAAoADQALAAQA+f/w/+z/8f/8/wkAEQAQAAUA+f/y//X//v8GAAgAAwD6//L/8//6/wQACwAPAAwABAD6//L/7v/w//j/AwAMAA4ABgD7//L/8P/4/wMACAAFAPz/8v/u//T///8JAA4ADAADAPj/8P/u//L/+P8BAAkADAAHAP7/9f/y//b//v8GAAcA/v/z/+z/7v/4/wUADgANAAQA+P/v/+z/8f/4/wAABgAIAAUA///3//P/9v/9/wMABgABAPf/7//t//X/AQAMAA8ACQD8/+7/6P/s//T//f8CAAUAAwD+//r/+P/4//v/AAADAAAA+f/y/+7/8v/9/wkAEAANAAEA8//r/+z/9P/+/wQABQADAP7/+P/3//j/+//+/wEAAAD7//T/8f/z//r/BQAPABEACAD5/+3/6//y//z/BQAIAAYA///5//r//P///wEAAwAAAPz/9v/z//P/+P8BAAwAEAAJAP3/8f/s//H/+/8HAA0ACQABAPr/9//6////BQAGAAMA/f/3//T/9f/5/wEACQAPAA0ABAD3/+7/7f/1/wIACwALAAQA+//3//r/AQAJAAsABwD///f/8//1//v/AwALAA8ADgAHAPz/8v/v//X///8JAA0ACAD+//j/+P///wcADgAMAAIA9v/w//L/+v8EAAwAEQAQAAoAAQD4//P/9P/8/wYACwAKAAQA/P/6//3/BAALAA0ABQD6//L/8v/5/wMADAARABAACQAAAPn/9//5////BgAKAAkABAD///z//v8EAAwADwAJAP3/8//x//X/AAAKABAAEAAKAAMA/f/5//n/+/8AAAYACgAKAAUA///7//3/BgAOAA8ACAD7//D/8P/5/wcAEwAWABAAAwD2//H/9P/9/wgADQAMAAcA///6//v/AQALABIAEAAGAPn/8f/y//z/CAASABQADgAEAPr/9v/5////BQAIAAcABAD///z//f8AAAYACwAMAAgA///3//T/9/8BAA0AFQAUAAkA/P/1//X//f8FAAoACAABAPv/+v/+/wUACwAMAAkAAgD6//T/9P/4/wEACgARABEACgAAAPn/9//7/wIACAAKAAUA///9//7/AgAHAAkACQAFAP//+v/2//b/+v8DAAsAEAAOAAYA+//1//f///8HAAoABwAAAPr/+v8AAAkADwAPAAoAAAD3//P/9f/8/wUADAAOAAsAAwD5//T/9v/+/wcACwAHAP7/9v/1//z/CAARABQADQAAAPP/7v/z//7/CgARABEACwACAPr/9v/4//7/BQAJAAcAAAD4//X/+f8BAAsAEAANAAMA+P/z//X//P8DAAoADQAMAAgAAgD8//n/+v8AAAgACwAIAAAA+P/2//r/BQAPABEACgD8//D/7P/z////CwARAA8ABwD///n/+P/8/wMACQALAAcA///4//f//P8HABAAFAANAP//8f/t//P//v8KAA8ADQAFAP7/+f/5//3/AAAEAAYABAAAAPz/+//9/wMACgAPAA4ABQD5//P/9P/8/wYADQANAAcA///8//3/AQAEAAUAAgD+//v/+v/8/wAABAAHAAsACwAGAP7/9//z//j///8MAAkA/v8DAC0ADQASAFUACgCq/9X/0f/d/+P/+/+m/6oAuwD//3AA//9f/rj/CwBhAOL+BQAsAZf/0f5nAS8Auf/C//UBxQEI/7r/kf95/R0AtQAgAHYAyAC2ALoBgQEJ/rX9/P+h/YP+UQGKAeP/AQCM/+MAmP81/yAC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1f/L/9v/9f8HABYAIAApAC8ALAAfAA8A///y/+//6f/h/+f/8/8AAAwADwAPAA4A///o/9v/4P/s//v/AQAFAAoACAAGAAEA7//l/+b/6f/v//b/AwAdACkAJwAqACsAGwAAAOX/0P/M/9j/7P/9/wMADAAWABIABQD///v/8f/m/93/3P/k/+//+f8BAAcADQAOAAYA+f/x//T//v8HABEAHQAhAB4AGQAMAPv/9v/t/93/1P/V/+T/9v8CABAAGgAYABEA/v/m/9f/0P/Q/9f/5v/6/w4AGQAXABYAGAAbABkADAD9//j/+f/+/wQACwAQABAABADz/+j/3v/W/9r/4f/r//7/DwASAAcA+//6//j/8P/n/9//3f/l//L/BQAeAC8AOQA4ACcAFAAHAPv/6v/g/+H/7v/8/////f/8//v/+//2/+3/5//j/9//4v/s//v/DgAZABQABwD9//X/7//q/+//AwAWACcALwArACcAIAARAAAA7v/i/9z/1f/Q/9r/7v8DABMAEgAIAAAA9v/q/+D/3P/k//P//P8EAA4AFQAZABcAEAAOABAADgAHAAAAAAAKABgAHwAaAAwA+f/p/9j/yf/L/9n/5v/v//f/BwAXABcAEQAIAPr/8//u/+n/5v/r//z/FAAoADEANgA1ACIABwD4//L/9P/4//r/+//4//v//f/3//D/7v/r/+L/3f/c/+X/+f8IABIAHwAkAB4AEAD8/+//6//x//7/CQATACIAMAAxACoAIQAVAAUA8f/d/9L/0v/Y/+H/7f/8/woADwAFAPT/6v/n/+v/9f///wYADwAWABcAHAAdABoAFAAHAPz/9v/7/wgADwAWAB0AIgAdAAwA9f/g/9L/zP/K/9H/3//r//j/BAAMABUAHAAbAAwA+//0//P/9v/+/w4AHAAnAC4AJwAaAA4ABAD6//T/8//6/wAA/v/6//r/+v/5//X/6v/Y/9D/0v/Z/+j///8YACoALgAqACEAFgAJAP3/9P/0//z/BQAPABQAFgAcACEAGwANAP//8P/g/9j/2v/k//P//f////3/+v/1//D/7f/s//P//v8KABUAGgAfACQAJAAgABoADgD///D/6P/r//f/CwAaAB4AGQARAAgA+v/p/9//2f/X/9r/4v/r//n/CQARABIAEwATAA4AAgD5//v/BAARAB4AJgAkABoADgACAPb/8f/1//b/8v/1////BgAKAAoABgAAAPf/6//d/9P/0//g//T/BwAYACcAKwAjABgADwAJAAcAAwD8//n//P8GAA4ADwASABIACgAAAPL/5f/h/+T/7f/4/wUADwANAAEA8v/r/+v/7v/0//j//f8KABgAIgAoACkAJgAdAAwA+f/r/+T/4//q//b/AgARABkAEwAFAPv/9//z/+7/7P/r/+z/8v/5/wIACwATABQADAD///r//f///wAACQAYACEAHQAWAAwA/v/x/+v/6P/m/+r/8//5//7/BgAWABwAFQAHAPv/7f/k/+X/6v/y/wAADgAXABcAFQAUAA4ABQABAAEAAAD9//v/+v/8/wIACwAKAAAA+P/x/+z/6v/x//v/BQAPABUAFAAPAAkAAQD4//D/8v/z//P/9//8/wUAEQAdAB8AGgANAAAA8v/o/+b/7v/3//3/AQAFAAgACAAGAAAA/P/7//7////9/wAABQAJAAsADAAKAAMA+f/v/+n/6v/1/wIACgAPABIAEQAMAAUA/f/5//X/7//u/+//8v/8/wUACwARABUAFAAKAP7/9v/z//T/+f///wIAAgAEAAQAAQD+//z//f/7//f/+P/9/wAABAAIAAoACwAJAAEA9//t/+v/8f/6/wAACQAQABIADwALAAkABQAAAPr/8//u/+//9f/6/wAABgAMAA4ACQABAPr/9//1//X/+v8AAAUABwAFAAEAAQADAAEA///8//v//f8AAAUACAANABAADQAEAP3/9v/w/+z/7v/0//z/AwAIAAcABgAHAAcAAwD///v/9//1//b/+/8AAAcADAAOAAsABgACAAAA/P/6//z/AAACAAMAAgAAAP///f/9//v/9//3//j/+P/7/wEACAAMAAsACAAEAP//+v/4//j/+v///wMABgAHAAgACQAIAAUAAgAAAP3/+P/1//X/+P/+/wIAAwACAAAA///8//v/+v/9/wAAAgADAAUABgAGAAQAAgAAAAAA///9//z//P8AAAQACAAJAAgABAAAAPv/+P/2//f/+f/7//3///8BAAQABAAEAAMAAgABAAAA/f/9////AQAEAAYABgAFAAMAAAD+//3//v///wAAAAABAAIAAgABAAAA///+//z/+//6//r//f8AAAMABQAHAAcABQABAAAA////////AAAAAAAAAQACAAIAAgACAAEAAAD///3//f/9//7/AAAAAAEAAQAAAP///v/9//7/AAAAAAEAAQACAAIAAgADAAIAAgAAAAAA///+////AAAAAAEAAgACAAEAAAAAAP////////////8AAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAABAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==';
   let sampleBuffer = null, sampleOffset = 0, sampleLoading = null, sampleUnavailable = false;
-  const sampleDataPromise = fetch(REAL_BELL_URL, {mode:'cors'})
-    .then(response => {
-      if (!response.ok) throw new Error('Glockenton: HTTP ' + response.status);
-      return response.arrayBuffer();
-    })
-    .catch(() => null);
   let enabled = false, gotSensorData = false, count = 0;
   let lastLevel = 0;
   let lastAnimationTimer = null, sensorTimeout = null;
@@ -241,16 +236,49 @@
   }
   function updateSoundDescription() {
     const label=bellTypes[selectedBell].label;
-    const state=sampleBuffer?'✓ Originalaufnahme geladen'
-      :sampleUnavailable?'⚠ Aufnahme nicht erreichbar, Ersatzklang aktiv'
-      :'◌ Originalaufnahme wird geladen';
+    const state=sampleBuffer?'✓ Originalton offline bereit'
+      :sampleUnavailable?'⚠ Audioformat nicht verfügbar, Ersatzklang aktiv'
+      :'🔔 Originalton eingebettet · Tippe zum Starten';
     $('soundDescription').textContent=state+' · '+label;
   }
   updateBellSelection();
 
   function feedback(message, icon='✦') { $('feedback').textContent = message; $('feedbackIcon').textContent = icon; }
+  let screenLock=null, requestingScreenLock=false;
+  async function syncScreenLock() {
+    if(!enabled || document.hidden) {
+      const lock=screenLock;
+      screenLock=null;
+      if(lock) await lock.release().catch(()=>{});
+      $('wakeStatus').textContent='Bildschirm-Wachhalten ist pausiert.';
+      return;
+    }
+    if(!navigator.wakeLock) {
+      $('wakeStatus').textContent='Automatisches Wachhalten nicht verfügbar. Bildschirm bitte manuell eingeschaltet lassen.';
+      return;
+    }
+    if(screenLock || requestingScreenLock) return;
+    requestingScreenLock=true;
+    try {
+      const lock=await navigator.wakeLock.request('screen');
+      if(!enabled || document.hidden) {await lock.release();return;}
+      screenLock=lock;
+      $('wakeStatus').textContent='✓ Bildschirm bleibt an. Manuelles Sperren pausiert die Glocke.';
+      lock.addEventListener('release',()=>{
+        if(screenLock !== lock) return;
+        screenLock=null;
+        $('wakeStatus').textContent='Wachhalten beendet. Bildschirm bitte eingeschaltet lassen.';
+      });
+    } catch (_) {
+      $('wakeStatus').textContent='Wachhalten wurde nicht erlaubt. Bildschirm bitte manuell eingeschaltet lassen.';
+    } finally {
+      requestingScreenLock=false;
+    }
+  }
+
   function setActive(value) {
     enabled = value;
+    void syncScreenLock();
     toggle.classList.toggle('active', enabled);
     $('dot').classList.toggle('live',enabled);
     $('stageStatus').textContent = enabled ? 'LIVE' : 'BEREIT';
@@ -279,40 +307,17 @@
   }
 
 
-  // Ermittelt den ersten hörbaren Glockenschlag aus der Originalaufnahme,
-  // damit nicht bei jeder Handybewegung das ganze Rhythmusmuster abgespielt wird.
-  function findFirstStrike(buffer) {
-    const samples = buffer.getChannelData(0), rate = buffer.sampleRate;
-    const step = Math.max(1,Math.floor(rate*.012));
-    const energies = [];
-    const stop = Math.min(samples.length, Math.floor(rate*5));
-    for(let i=0;i<stop;i+=step) {
-      let power=0, len=Math.min(step,stop-i);
-      for(let j=0;j<len;j+=3) power+=samples[i+j]*samples[i+j];
-      energies.push(Math.sqrt(power / Math.max(1,Math.ceil(len/3))));
-    }
-    const max=Math.max(...energies,0);
-    if(max<.004) return 0;
-    for(let i=1;i<energies.length;i++){
-      const prev=energies[Math.max(0,i-7)];
-      if(energies[i]>max*.20 && energies[i]>prev*1.65) {
-        return Math.max(0,i*step/rate-.018);
-      }
-    }
-    return 0;
-  }
-
   async function prepareRealBell() {
     if(sampleBuffer) return true;
     if(sampleUnavailable) return false;
     if(sampleLoading) return sampleLoading;
     sampleLoading=(async () => {
-      const bytes=await sampleDataPromise;
-      if(!bytes) throw new Error('Sounddatei nicht erreichbar');
+      const bytes=Uint8Array.from(atob(BELL_WAV_BASE64),c=>c.charCodeAt(0));
       initAudio();
-      sampleBuffer=await audioCtx.decodeAudioData(bytes.slice(0));
-      if(sampleBuffer.duration<.2) throw new Error('Sounddatei zu kurz');
-      sampleOffset=findFirstStrike(sampleBuffer);
+      const buffer=await audioCtx.decodeAudioData(bytes.buffer);
+      if(buffer.duration<.2) throw new Error('Sounddatei zu kurz');
+      sampleBuffer=buffer;
+      sampleOffset=0;
       updateSoundDescription();
       return true;
     })().catch(()=>{
@@ -411,6 +416,10 @@
   function ring(strength=1) {
     try {
       initAudio();
+      if(audioCtx.state !== 'running') {
+        feedback('Ton pausiert. Bitte auf Test oder Start tippen.','⚠');
+        return;
+      }
       if(sampleBuffer) recordedBell(strength);
       else { synthBell(strength); void prepareRealBell(); }
     } catch (e) { feedback(e.message,'⚠');return; }
@@ -497,8 +506,8 @@
     try {
       initAudio();
       await audioCtx.resume();
-      await prepareRealBell();
-    } catch (_) { /* Bei Netzwerkproblemen den Synthesizer verwenden. */ }
+      void prepareRealBell();
+    } catch (_) { /* Bei nicht verfügbarem Audio den Fehler unten anzeigen. */ }
     if(!enabled) {
       physics.bellVelocity+=2.8;
       physics.clapperVelocity-=1.45;
@@ -564,6 +573,8 @@
     const now=performance.now();
     if(!gotSensorData) {
       gotSensorData=true;
+      $('stageStatus').textContent='LIVE';
+      $('dot').classList.add('live');
       clearTimeout(sensorTimeout);
       feedback('Glockenphysik aktiv. Langsam schwingen oder kräftig schütteln!','✓');
     }
@@ -606,6 +617,14 @@
     window.removeEventListener('devicemotion',motionHandler);
     clearTimeout(sensorTimeout);
     resetDetection();
+    cancelAnimationFrame(physics.animationId);
+    physics.animationId=0;
+    physics.lastFrame=0;
+    physics.bell=physics.bellVelocity=physics.clapper=physics.clapperVelocity=0;
+    physics.previewUntil=0;
+    stage.classList.remove('physics');
+    bellPivot.style.transform='';
+    clapper.style.transform='';
     setActive(false);
     feedback(message,'✦');
     bars.forEach(b=>{b.style.background='#d4d8c6';b.style.opacity='.7';});
@@ -615,37 +634,51 @@
   });
   toggle.addEventListener('click', async () => {
     if(enabled) {stopListening();return;}
-    if (!('DeviceMotionEvent' in window)) {
-      feedback('Dieser Browser unterstützt leider keine Bewegungssensoren. Der Glockentest funktioniert trotzdem.','⚠');
+    if(toggle.disabled) return;
+    if(!window.isSecureContext) {
+      feedback('Bewegung braucht einen sicheren Kontext. Bitte die HTTPS-Seite im Browser öffnen.','⚠');
       return;
     }
-    // The permission request MUST be made directly in this click event (iPhone/iPad).
-    let permissionPromise;
+    if(!('DeviceMotionEvent' in window)) {
+      feedback('Dieser Browser unterstützt keine Bewegungssensoren. Der Glockentest funktioniert trotzdem.','⚠');
+      return;
+    }
+    toggle.disabled=true;
     try {
-      permissionPromise = (typeof DeviceMotionEvent.requestPermission === 'function')
-        ? DeviceMotionEvent.requestPermission() : Promise.resolve('granted');
-    } catch (e) {feedback('Sensorfreigabe fehlgeschlagen: '+e.message,'⚠');return;}
-    try {initAudio();await audioCtx.resume();void prepareRealBell();}
-    catch(e) {feedback('Ton konnte nicht gestartet werden: '+e.message,'⚠');return;}
-    try {
-      if ((await permissionPromise) !== 'granted') {
+      // Beide APIs sofort aus dem Klick heraus aufrufen (iPhone/iPad).
+      // Fehler direkt behandeln, auch wenn die zweite API synchron fehlschlägt.
+      const permissionPromise=Promise.resolve(
+        typeof DeviceMotionEvent.requestPermission === 'function'
+          ? DeviceMotionEvent.requestPermission() : 'granted'
+      ).then(value=>({value}),error=>({error}));
+      initAudio();
+      const audioPromise=Promise.resolve(audioCtx.resume());
+      const [permission]=await Promise.all([permissionPromise,audioPromise]);
+      if(permission.error) throw permission.error;
+      if(permission.value !== 'granted') {
         feedback('Bewegungssensor nicht freigegeben. Bitte Berechtigung erlauben.','⚠');
         return;
       }
+      if(document.hidden) return;
+      if(audioCtx.state !== 'running') throw new Error('Ton ist pausiert. Bitte erneut starten.');
+      void prepareRealBell();
       resetDetection();
       setActive(true);
+      $('stageStatus').textContent='VERBINDET';
+      $('dot').classList.remove('live');
       startPhysics();
       window.addEventListener('devicemotion',motionHandler,{passive:true});
       feedback('Sensor wird verbunden … bitte Handy bewegen.','◌');
-      sensorTimeout=setTimeout(() => {
+      sensorTimeout=setTimeout(()=>{
         if(!gotSensorData && enabled) {
-          const hint = !window.isSecureContext
-            ? 'Keine Sensordaten. Bitte die Seite über HTTPS öffnen (nicht HTTP).'
-            : 'Keine Sensordaten. Browser-Einstellungen für Bewegungssensoren prüfen oder über HTTPS öffnen.';
-          feedback(hint,'⚠');
+          stopListening('Keine Sensordaten. Bewegungssensoren in den Browser-Einstellungen freigeben. Bei lokaler Datei bitte die HTTPS-Seite verwenden.');
         }
       },3200);
-    } catch(e) {feedback('Zugriff auf Bewegungssensor fehlgeschlagen: '+e.message,'⚠');}
+    } catch(e) {
+      stopListening('Start fehlgeschlagen: '+e.message);
+    } finally {
+      toggle.disabled=false;
+    }
   });
 })();
 </script>
